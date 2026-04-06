@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="admin-header">
+  <h1>Administración de Productos</h1>
+  <a class="btn primary admin-add-btn" href="{{ url_for('admin_producto_nuevo') }}">Agregar producto</a>
+</div>
+<div class="grid" style="margin-top:1rem;">
+  {% for p in productos %}
+    <div class="card">
+      {% if p['imagen'] %}
+        <img src="{{ url_for('static', filename=p['imagen']) }}" alt="{{ p['nombre'] }}" style="max-width: 100%; height: auto; margin-bottom: 1rem;">
+      {% endif %}
+      <h3>{{ p['nombre'] }}</h3>
+      <p>{{ p['descripcion'] or '' }}</p>
+      <div class="row"><strong>${{ '%.2f'|format(p['precio']) }}</strong> <span class="pill">Stock: {{ p['stock'] }}</span></div>
+      <div class="product-actions">
+        <a class="btn" href="{{ url_for('admin_producto_editar', producto_id=p['id']) }}">Editar</a>
+        <form method="post" action="{{ url_for('admin_producto_eliminar', producto_id=p['id']) }}" style="display:inline;">
+          <button class="btn danger" type="submit" onclick="return confirm('Eliminar producto?');">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

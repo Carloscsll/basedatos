@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+{% if action == 'register' %}
+  <h1>Registro</h1>
+  <form method="post">
+    <label>Usuario</label>
+    <input type="text" name="username" required>
+    <label>Contraseña</label>
+    <input type="password" name="password" required>
+    <div class="row" style="margin-top: 20px;">
+      <button class="btn primary" type="submit">Registrar</button>
+      <a class="btn" href="{{ url_for('login') }}">Ir a login</a>
+    </div>
+  </form>
+{% else %}
+  <h1>Iniciar sesión</h1>
+  <form method="post">
+    <label>Usuario</label>
+    <input type="text" name="username" required>
+    <label>Contraseña</label>
+    <input type="password" name="password" required>
+    <div class="row" style="margin-top: 20px;">
+      <button class="btn primary" type="submit">Entrar</button>
+      <a class="btn" href="{{ url_for('register') }}">Registrarse</a>
+    </div>
+  </form>
+{% endif %}
+{% endblock %}

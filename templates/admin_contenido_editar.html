@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="admin-header">
+  <h1>Editar contenido de la página</h1>
+</div>
+<form method="post">
+  {% for item in contenido %}
+    <label>{{ item['clave'] }}</label>
+    <textarea name="contenido_{{ item['clave'] }}" rows="3">{{ item['texto'] }}</textarea>
+  {% endfor %}
+  <div class="row" style="margin-top: 20px;">
+    <button class="btn primary" type="submit">Guardar cambios</button>
+    <a class="btn" href="{{ url_for('admin_contenido') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

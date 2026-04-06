@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block content %}
+<section id="inicio" class="page-section">
+  <h1>{{ db.obtener_contenido('titulo_principal') or "Bienvenido a Mi Tienda" }}</h1>
+  <p>{{ db.obtener_contenido('descripcion_principal') or "Encuentra productos seleccionados, precios competitivos y una experiencia de compra clara." }}</p>
+</section>
+
+<section id="nosotros" class="page-section">
+  <h2>{{ db.obtener_contenido('titulo_nosotros') or "Sobre Nosotros" }}</h2>
+  <p>{{ db.obtener_contenido('descripcion_nosotros') or "Somos una tienda pequeña comprometida con la calidad, el servicio y la satisfacción de nuestros clientes." }}</p>
+</section>
+
+<section id="catalogo" class="page-section">
+  <h2>{{ db.obtener_contenido('titulo_catalogo') or "Catálogo" }}</h2>
+  <div class="grid">
+  {% for p in productos %}
+    <div class="card">
+      {% if p['imagen'] %}
+        <img src="{{ url_for('static', filename=p['imagen']) }}" alt="{{ p['nombre'] }}" style="max-width: 100%; height: auto; margin-bottom: 1rem;">
+      {% endif %}
+      <h3>{{ p["nombre"] }}</h3>
+      <p class="muted">{{ p["descripcion"] or "" }}</p>
+      <div class="row">
+        <strong>${{ "%.2f"|format(p["precio"]) }}</strong>
+        <span class="pill">Stock: {{ p["stock"] }}</span>
+      </div>
+
+      <div class="row">
+        <a class="btn" href="{{ url_for('producto', producto_id=p['id']) }}">Ver</a>
+        {% if current_user %}
+        <form method="post" action="{{ url_for('carrito_agregar') }}">
+          <input type="hidden" name="producto_id" value="{{ p['id'] }}">
+          <input class="qty" type="number" name="cantidad" min="1" value="1">
+          <button class="btn primary" type="submit">Agregar</button>
+        </form>
+        {% else %}
+        <a class="btn" href="{{ url_for('login') }}">Inicia sesión para comprar</a>
+        {% endif %}
+      </div>
+      {% if is_admin %}
+      <div class="row" style="margin-top: 0.5rem;">
+        <a class="btn secondary" href="{{ url_for('admin_producto_editar', producto_id=p['id']) }}">Editar</a>
+        <form method="post" action="{{ url_for('admin_producto_eliminar', producto_id=p['id']) }}" style="display:inline;">
+          <button class="btn danger" type="submit" onclick="return confirm('Eliminar producto?');">Eliminar</button>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+  </div>
+</section>
+{% endblock %}

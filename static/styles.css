@@ -1,0 +1,410 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Roboto:wght@300;400;500&display=swap');
+
+:root {
+    --primary-color: #1a1a1a; /* Deep black */
+    --secondary-color: #d4af37; /* Gold */
+    --accent-color: #800020; /* Burgundy */
+    --background-color: #f8f8f8; /* Light gray */
+    --text-color: #333;
+    --muted-color: #666;
+    --border-color: #e0e0e0;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+body {
+    margin: 0;
+    background: var(--background-color);
+    color: var(--text-color);
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+}
+
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 30px;
+    background: linear-gradient(135deg, var(--primary-color), #333);
+    border-bottom: 2px solid var(--secondary-color);
+    box-shadow: var(--shadow);
+}
+
+.brand {
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: 2rem;
+    text-decoration: none;
+    color: var(--secondary-color);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    transition: var(--transition);
+}
+
+.topnav {
+    display: flex;
+    gap: 14px;
+    margin-left: 2rem;
+}
+
+.topnav a {
+    color: var(--secondary-color);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 6px 8px;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.topnav a:hover {
+    background: rgba(212, 175, 55, 0.15);
+}
+
+.page-section {
+    background: #fff;
+    padding: 24px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow);
+}
+
+.page-section h2,
+.page-section h1 {
+    margin-top: 0;
+}
+
+.brand:hover {
+    color: #fff;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.cartlink {
+    text-decoration: none;
+    color: var(--secondary-color);
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.topbar a:not(.brand) {
+    text-decoration: none;
+    color: var(--secondary-color);
+    font-weight: 500;
+    margin-left: 20px;
+    transition: var(--transition);
+}
+
+.topbar a:not(.brand):hover {
+    color: #fff;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.admin-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.2rem;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    position: sticky;
+    top: 86px; /* debajo de la topbar */
+    z-index: 15;
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.admin-header h1 {
+    margin: 0;
+    font-size: 1.75rem;
+}
+
+.product-actions {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.admin-add-btn {
+    margin: 0;
+}
+
+.card {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.muted {
+    color: var(--muted-color);
+    font-size: 0.9rem;
+}
+
+.pill {
+    background: linear-gradient(135deg, var(--secondary-color), #b8860b);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn {
+    border: 2px solid var(--secondary-color);
+    background: transparent;
+    padding: 12px 24px;
+    border-radius: 25px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--secondary-color);
+    font-weight: 500;
+    font-size: 1rem;
+    transition: var(--transition);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.btn:hover {
+    background: var(--secondary-color);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+}
+
+.btn.primary {
+    border-color: var(--accent-color);
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.btn.primary:hover {
+    background: #a0002a;
+    border-color: #a0002a;
+    box-shadow: 0 4px 15px rgba(160, 0, 42, 0.4);
+}
+
+.btn.danger {
+    border-color: transparent;
+    background: #ff4444;
+    color: #fff;
+}
+
+.btn.danger:hover {
+    background: #cc0000;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+.qty {
+    width: 80px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 2px solid var(--border-color);
+    font-size: 1rem;
+    transition: var(--transition);
+}
+
+.qty:focus {
+    border-color: var(--secondary-color);
+    outline: none;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+}
+
+.table th, .table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.table th {
+    background: linear-gradient(135deg, var(--primary-color), #333);
+    color: var(--secondary-color);
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.table tbody tr:hover {
+    background: rgba(212, 175, 55, 0.05);
+}
+
+/* Additional elegant touches */
+h1, h2, h3 {
+    font-family: 'Playfair Display', serif;
+    color: var(--primary-color);
+}
+
+p {
+    margin-bottom: 1rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .topbar {
+        padding: 15px 20px;
+    }
+    .brand {
+        font-size: 1.5rem;
+    }
+    .container {
+        margin: 20px auto;
+        padding: 0 15px;
+    }
+    .grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    .card {
+        padding: 20px;
+    }
+}
+
+.table th, .table td { 
+    padding: 10px 12px; 
+    border-bottom: 1px solid #eee; 
+    text-align: left; 
+}
+
+.checkout { 
+    margin-top: 14px; 
+    display:flex; 
+    gap: 16px; 
+    align-items: flex-start; 
+    justify-content: space-between; 
+}
+
+.checkoutform { 
+    display:flex; 
+    gap: 10px; 
+    flex-wrap: wrap; 
+}
+
+.input { 
+    padding: 9px 10px; 
+    border: 1px solid #d6d6e2; 
+    border-radius: 10px; 
+    min-width: 220px; 
+}
+
+.alerts { 
+    margin-bottom: 10px; 
+}
+
+.alert { 
+    background: #fff3cd; 
+    border: 1px solid #ffe69c; 
+    padding: 10px; 
+    border-radius: 12px; 
+}
+
+.footer { 
+    text-align:center; 
+    padding: 18px; 
+    color: #666; 
+}
+
+/* Form Styles */
+form {
+    background: #fff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+}
+
+form label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--primary-color);
+    font-family: 'Playfair Display', serif;
+}
+
+form input[type="text"],
+form input[type="number"],
+form input[type="email"],
+form input[type="password"],
+form textarea,
+.input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: 'Roboto', sans-serif;
+    transition: var(--transition);
+    margin-bottom: 20px;
+    box-sizing: border-box;
+}
+
+form input[type="text"]:focus,
+form input[type="number"]:focus,
+form input[type="email"]:focus,
+form input[type="password"]:focus,
+form textarea:focus,
+.input:focus {
+    border-color: var(--secondary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+}
+
+form textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.btn-small {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    border-radius: 20px;
+}

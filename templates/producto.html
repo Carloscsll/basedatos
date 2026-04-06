@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+{% if p["imagen"] %}
+  <img src="{{ url_for('static', filename=p['imagen']) }}" alt="{{ p['nombre'] }}" style="max-width: 100%; height: auto; margin-bottom: 1rem;">
+{% endif %}
+<h1>{{ p["nombre"] }}</h1>
+<p>{{ p["descripcion"] or "" }}</p>
+<p><strong>Precio:</strong> ${{ "%.2f"|format(p["precio"]) }}</p>
+<p><strong>Stock:</strong> {{ p["stock"] }}</p>
+
+{% if current_user %}
+<form method="post" action="{{ url_for('carrito_agregar') }}">
+  <input type="hidden" name="producto_id" value="{{ p['id'] }}">
+  <input class="qty" type="number" name="cantidad" min="1" value="1">
+  <button class="btn primary" type="submit">Agregar al carrito</button>
+</form>
+{% else %}
+  <a class="btn" href="{{ url_for('login') }}">Inicia sesión para comprar</a>
+{% endif %}
+{% endblock %}

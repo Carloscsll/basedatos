@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="admin-header" style="position: static;">
+  {% if action == 'nuevo' %}
+    <h1>Nuevo producto</h1>
+  {% else %}
+    <h1>Editar producto</h1>
+  {% endif %}
+</div>
+<form method="post" enctype="multipart/form-data">
+  <label>Nombre</label>
+  <input type="text" name="nombre" value="{{ producto['nombre'] if producto else '' }}" required>
+  <label>Descripción</label>
+  <textarea name="descripcion">{{ producto['descripcion'] if producto else '' }}</textarea>
+  <label>Precio</label>
+  <input type="number" name="precio" step="0.01" min="0" value="{{ producto['precio'] if producto else '0.00' }}" required>
+  <label>Stock</label>
+  <input type="number" name="stock" min="0" value="{{ producto['stock'] if producto else '0' }}" required>
+  <label>Imagen</label>
+  <input type="file" name="imagen" accept="image/*">
+  {% if producto and producto['imagen'] %}
+    <p>Imagen actual: <img src="{{ url_for('static', filename=producto['imagen']) }}" alt="Imagen actual" style="max-width: 200px;"></p>
+  {% endif %}
+  <div class="row" style="margin-top: 20px;">
+    <button class="btn primary" type="submit">Guardar</button>
+    <a class="btn" href="{{ url_for('admin_productos') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

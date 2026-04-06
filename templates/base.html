@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "Mi Tienda" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='normalize.css-master/normalize.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('index') }}">Mi Tienda</a>
+    <nav class="topnav">
+      <a href="{{ url_for('index') }}#inicio">Inicio</a>
+      <a href="{{ url_for('index') }}#nosotros">Nosotros</a>
+      <a href="{{ url_for('index') }}#catalogo">Catálogo</a>
+    </nav>
+    <a class="cartlink" href="{{ url_for('carrito') }}">Carrito</a>
+    {% if current_user %}
+      <span class="badge">{{ current_user }}</span>
+      {% if is_admin %}
+        <a class="btn-small" href="{{ url_for('admin_productos') }}">Productos</a>
+        <a class="btn-small" href="{{ url_for('admin_contenido') }}">Contenido</a>
+      {% endif %}
+      <a class="btn-small" href="{{ url_for('logout') }}">Cerrar sesión</a>
+    {% else %}
+      <a class="btn-small" href="{{ url_for('login') }}">Login</a>
+      <a class="btn-small" href="{{ url_for('register') }}">Registro</a>
+    {% endif %}
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alerts">
+          {% for m in messages %}
+            <div class="alert">{{ m }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">{{ db.obtener_contenido('footer') or "Hecho con Flask + SQLite" }}</footer>
+</body>
+</html>
