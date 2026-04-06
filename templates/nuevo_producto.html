@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Nuevo producto</h1>
+
+<form method="post" class="card form-card">
+  <label>
+    Nombre
+    <input type="text" name="nombre" required>
+  </label>
+
+  <label>
+    Descripcion
+    <textarea name="descripcion" rows="3"></textarea>
+  </label>
+
+  <label>
+    Nombre de imagen en carpeta imagenes (opcional)
+    <input type="text" name="imagen_url" placeholder="foto-producto.jpg">
+  </label>
+
+  <label>
+    Precio
+    <input type="number" name="precio" min="0" step="0.01" required>
+  </label>
+
+  <label>
+    Stock
+    <input type="number" name="stock" min="0" step="1" value="0" required>
+  </label>
+
+  <div class="row">
+    <button class="btn primary" type="submit">Guardar producto</button>
+    <a class="btn" href="{{ url_for('tienda') }}">Cancelar</a>
+  </div>
+</form>
+{% endblock %}

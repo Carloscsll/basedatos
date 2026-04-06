@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Iniciar sesion</h1>
+
+<form method="post" class="card form-card">
+  <input type="hidden" name="next" value="{{ request.args.get('next', '') }}">
+
+  <label>
+    Usuario
+    <input type="text" name="username" required>
+  </label>
+
+  <label>
+    Contrasena
+    <input type="password" name="password" required>
+  </label>
+
+  <div class="row">
+    <button class="btn primary" type="submit">Entrar</button>
+    <a class="btn" href="{{ url_for('index') }}">Volver</a>
+  </div>
+</form>
+
+<p style="margin-top: 16px; text-align: center; color: var(--text-2);">
+  ¿No tienes perfil? <a href="{{ url_for('registro') }}" style="color: var(--accent);">Crear uno aquí</a>
+</p>
+{% endblock %}

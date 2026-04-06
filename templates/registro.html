@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Crear perfil</h1>
+
+<form method="post" class="card form-card">
+  <label>
+    Nombre de usuario
+    <input type="text" name="username" minlength="3" required>
+  </label>
+
+  <label>
+    Contraseña
+    <input type="password" name="password" minlength="6" required>
+  </label>
+
+  <label>
+    Confirmar contraseña
+    <input type="password" name="password_confirm" minlength="6" required>
+  </label>
+
+  <div class="row">
+    <button class="btn primary" type="submit">Crear perfil</button>
+    <a class="btn" href="{{ url_for('login') }}">Volver</a>
+  </div>
+</form>
+
+<p style="margin-top: 16px; text-align: center; color: var(--text-2);">
+  ¿Ya tienes perfil? <a href="{{ url_for('login') }}" style="color: var(--accent);">Inicia sesión aquí</a>
+</p>
+{% endblock %}

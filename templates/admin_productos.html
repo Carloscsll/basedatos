@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Panel de administración - Productos</h1>
+
+<div class="row">
+  <a class="btn primary" href="{{ url_for('producto_nuevo') }}">+ Nuevo producto</a>
+  <a class="btn" href="{{ url_for('tienda') }}">Volver a tienda</a>
+</div>
+
+{% if not productos %}
+  <p>No hay productos. <a href="{{ url_for('producto_nuevo') }}">Crea uno aquí</a></p>
+{% else %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Imagen</th>
+        <th>Nombre</th>
+        <th>Precio</th>
+        <th>Stock</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in productos %}
+      <tr>
+        <td>#{{ p['id'] }}</td>
+        <td>
+          {% if p['imagen_url'] %}
+          <img src="{{ url_for('descargar_imagen', filename=p['imagen_url']) }}" alt="{{ p['nombre'] }}" style="width: 50px; height: 50px; border-radius: 6px; object-fit: cover;">
+          {% else %}
+          <div style="width: 50px; height: 50px; border-radius: 6px; background: var(--bg-2); display: flex; align-items: center; justify-content: center; color: var(--text-2); font-size: 10px;">Sin imagen</div>
+          {% endif %}
+        </td>
+        <td>{{ p['nombre'] }}</td>
+        <td>${{ "%.2f"|format(p['precio']) }}</td>
+        <td>{{ p['stock'] }}</td>
+        <td>
+          <div style="display: flex; gap: 8px;">
+            <a class="btn" href="{{ url_for('producto_editar', producto_id=p['id']) }}" style="padding: 6px 10px; font-size: 12px;">Editar</a>
+            <form method="post" action="{{ url_for('producto_eliminar', producto_id=p['id']) }}" style="display: inline;">
+              <button class="btn" type="submit" style="padding: 6px 10px; font-size: 12px; background: #f5e0db; border-color: #e8c9a8;" onclick="return confirm('¿Eliminar producto?');">Eliminar</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+{% endblock %}

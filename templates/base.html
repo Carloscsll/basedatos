@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "AquaLoca" }}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('index') }}">AquaLoca</a>
+    <nav class="navlinks">
+      <a class="cartlink" href="{{ url_for('index') }}">Inicio</a>
+      <a class="cartlink" href="{{ url_for('tienda') }}">Tienda</a>
+      <a class="cartlink" href="{{ url_for('carrito') }}">Carrito</a>
+      {% if usuario %}
+        <span class="userbadge">{{ usuario['nombre'] }} ({{ usuario['rol'] }})</span>
+        <a class="cartlink" href="{{ url_for('logout') }}">Cerrar sesión</a>
+      {% else %}
+        <a class="cartlink" href="{{ url_for('login') }}">Iniciar sesión</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alerts">
+          {% for m in messages %}
+            <div class="alert">{{ m }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">Hecho con Flask + SQLite</footer>
+</body>
+</html>

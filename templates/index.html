@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Tienda</h1>
+
+{% if es_admin %}
+  <div class="row">
+    <a class="btn primary" href="{{ url_for('admin_productos') }}">Panel de admin</a>
+    <a class="btn" href="{{ url_for('producto_nuevo') }}">+ Nuevo producto</a>
+  </div>
+{% endif %}
+
+<div class="grid">
+  {% for p in productos %}
+    <div class="card">
+      {% if p['imagen_url'] %}
+      <img class="product-image" src="{{ url_for('descargar_imagen', filename=p['imagen_url']) }}" alt="{{ p['nombre'] }}">
+      {% else %}
+      <div class="product-image product-image--placeholder">Sin imagen</div>
+      {% endif %}
+      <h3>{{ p["nombre"] }}</h3>
+      <p class="muted">{{ p["descripcion"] or "" }}</p>
+      <div class="row">
+        <strong>${{ "%.2f"|format(p["precio"]) }}</strong>
+        <span class="pill">Stock: {{ p["stock"] }}</span>
+      </div>
+
+      <div class="row">
+        <a class="btn" href="{{ url_for('producto', producto_id=p['id']) }}">Ver</a>
+        <form method="post" action="{{ url_for('carrito_agregar') }}">
+          <input type="hidden" name="producto_id" value="{{ p['id'] }}">
+          <input class="qty" type="number" name="cantidad" min="1" value="1">
+          <button class="btn primary" type="submit">Agregar</button>
+        </form>
+         {% if es_admin %}
+         <a class="btn" href="{{ url_for('producto_editar', producto_id=p['id']) }}" style="background: #f5e8d6; border-color: #d8be95;">Editar</a>
+         {% endif %}
+      </div>
+
+      {% if es_admin %}
+      <form method="post" action="{{ url_for('producto_actualizar_imagen', producto_id=p['id']) }}">
+        <label>
+          Cambiar imagen (nombre de archivo en imagenes)
+          <input type="text" name="imagen_url" value="{{ p['imagen_url'] or '' }}" placeholder="mi-foto.jpg">
+        </label>
+        <button class="btn" type="submit">Guardar imagen</button>
+      </form>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero" style="background-image: url('/imagenes/foto%20portada.jpg');">
+  <div class="hero-content">
+    <h1>Bienvenido a AquaLoca</h1>
+  </div>
+</section>
+
+<section class="featured-section">
+  <div class="section-head row">
+    <h2>Productos estrella</h2>
+    <a class="btn" href="{{ url_for('tienda') }}">Ver todos los productos</a>
+  </div>
+
+  <div class="grid featured-grid">
+    {% for p in destacados %}
+      <article class="card">
+        {% if p['imagen_url'] %}
+        <img class="product-image" src="{{ url_for('descargar_imagen', filename=p['imagen_url']) }}" alt="{{ p['nombre'] }}">
+        {% else %}
+        <div class="product-image product-image--placeholder">Sin imagen</div>
+        {% endif %}
+        <h3>{{ p['nombre'] }}</h3>
+        <p class="muted">{{ p['descripcion'] or '' }}</p>
+        <div class="row">
+          <strong>${{ '%.2f'|format(p['precio']) }}</strong>
+          <a class="btn" href="{{ url_for('producto', producto_id=p['id']) }}">Ver</a>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
