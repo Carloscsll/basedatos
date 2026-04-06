@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="product-detail">
+    <div class="product-container">
+        <div class="product-image-section">
+            <div class="product-image">📦</div>
+        </div>
+
+        <div class="product-info-section">
+            <h1 class="product-title">{{ p["nombre"] }}</h1>
+            
+            <p class="product-description">{{ p["descripcion"] or "Sin descripción disponible" }}</p>
+            
+            <div class="product-rating">
+                <span class="stars">⭐⭐⭐⭐⭐</span>
+                <span class="rating-count">(125 reseñas)</span>
+            </div>
+
+            <div class="product-pricing">
+                <span class="price">${{ "%.2f"|format(p["precio"]) }}</span>
+                <span class="original-price">Oferta limitada</span>
+            </div>
+
+            <div class="product-stock">
+                {% if p["stock"] > 10 %}
+                    <span class="stock-available">✅ En stock ({{ p["stock"] }} disponibles)</span>
+                {% elif p["stock"] > 0 %}
+                    <span class="stock-low">⚠️ Quedan pocas unidades ({{ p["stock"] }})</span>
+                {% else %}
+                    <span class="stock-out">❌ Producto agotado</span>
+                {% endif %}
+            </div>
+
+            <div class="product-actions">
+                <form method="post" action="{{ url_for('carrito_agregar') }}" class="add-to-cart-form">
+                    <input type="hidden" name="producto_id" value="{{ p['id'] }}">
+                    
+                    <div class="quantity-selector">
+                        <label for="cantidad">Cantidad:</label>
+                        <input type="number" id="cantidad" name="cantidad" min="1" max="{{ p['stock'] }}" value="1" required>
+                    </div>
+
+                    {% if p["stock"] > 0 %}
+                        <button class="btn primary large" type="submit">🛒 Agregar al Carrito</button>
+                    {% else %}
+                        <button class="btn disabled large" type="button" disabled>Agotado</button>
+                    {% endif %}
+                </form>
+
+                <a href="{{ url_for('index') }}" class="btn secondary large">← Volver al Catálogo</a>
+            </div>
+
+            <div class="product-benefits">
+                <h3>¿Por qué comprar aquí?</h3>
+                <ul>
+                    <li>✓ Envío rápido y seguro</li>
+                    <li>✓ Garantía de calidad</li>
+                    <li>✓ Fácil devolución (30 días)</li>
+                    <li>✓ Atención al cliente 24/7</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.product-detail {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.product-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+}
+
+.product-image-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.product-image {
+    font-size: 150px;
+    text-align: center;
+    background: #f5f5f5;
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+}
+
+.product-info-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.product-title {
+    font-size: 28px;
+    color: #333;
+    margin-bottom: 12px;
+    line-height: 1.2;
+}
+
+.product-description {
+    color: #666;
+    margin-bottom: 16px;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.product-rating {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stars {
+    font-size: 18px;
+}
+
+.rating-count {
+    color: #999;
+    font-size: 13px;
+}
+
+.product-pricing {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.price {
+    font-size: 32px;
+    color: var(--secondary);
+    font-weight: bold;
+}
+
+.original-price {
+    color: #999;
+    font-size: 14px;
+    text-decoration: line-through;
+}
+
+.product-stock {
+    margin-bottom: 20px;
+}
+
+.stock-available {
+    color: #2e7d32;
+    font-weight: 500;
+}
+
+.stock-low {
+    color: #f57c00;
+    font-weight: 500;
+}
+
+.stock-out {
+    color: #c62828;
+    font-weight: 500;
+}
+
+.product-actions {
+    margin-bottom: 24px;
+}
+
+.add-to-cart-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quantity-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.quantity-selector label {
+    font-weight: 500;
+    color: #333;
+}
+
+.quantity-selector input {
+    width: 80px;
+    padding: 8px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+.large {
+    padding: 14px;
+    font-size: 16px;
+    width: 100%;
+}
+
+.disabled {
+    background: #ccc;
+    color: white;
+    cursor: not-allowed;
+}
+
+.secondary {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #e0e0e0;
+}
+
+.secondary:hover {
+    background: #efefef;
+}
+
+.product-benefits {
+    background: #f9f9f9;
+    border-left: 4px solid var(--primary);
+    padding: 16px;
+    border-radius: 6px;
+}
+
+.product-benefits h3 {
+    margin: 0 0 12px 0;
+    color: #333;
+    font-size: 16px;
+}
+
+.product-benefits ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.product-benefits li {
+    color: #666;
+    margin: 6px 0;
+    font-size: 14px;
+}
+
+@media (max-width: 768px) {
+    .product-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .product-image {
+        font-size: 100px;
+    }
+
+    .product-title {
+        font-size: 22px;
+    }
+
+    .price {
+        font-size: 24px;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,255 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="header-bar">
+    <h1>🛒 Mi Carrito</h1>
+</div>
+
+<div class="cart-section">
+    {% if not items %}
+        <div class="empty-cart">
+            <p class="empty-icon">🛒</p>
+            <p class="empty-text">Tu carrito está vacío</p>
+            <a href="{{ url_for('index') }}" class="btn primary">Continuar Comprando</a>
+        </div>
+    {% else %}
+        <div class="cart-items">
+            {% for it in items %}
+                <div class="cart-item">
+                    <div class="item-image">📦</div>
+                    <div class="item-details">
+                        <h3>{{ it.p["nombre"] }}</h3>
+                        <p>{{ it.p["descripcion"] or "Sin descripción" }}</p>
+                        <div class="item-meta">
+                            <span>Cantidad: <strong>{{ it.qty }}</strong></span>
+                            <span>Precio unitario: <strong>${{ "%.2f"|format(it.p["precio"]) }}</strong></span>
+                        </div>
+                    </div>
+                    <div class="item-actions">
+                        <div class="subtotal">${{ "%.2f"|format(it.subtotal) }}</div>
+                        <form method="post" action="{{ url_for('carrito_quitar') }}">
+                            <input type="hidden" name="producto_id" value="{{ it.p['id'] }}">
+                            <button class="btn remove" type="submit">🗑️ Quitar</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="checkout-section">
+            <div class="total-box">
+                <span class="total-label">Total</span>
+                <span class="total-amount">${{ "%.2f"|format(total) }}</span>
+            </div>
+
+            <form method="post" action="{{ url_for('checkout') }}" class="checkout-form">
+                <div class="form-group">
+                    <label for="nombre">Nombre Completo *</label>
+                    <input class="input" id="nombre" name="nombre" placeholder="Tu nombre completo" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email (opcional)</label>
+                    <input class="input" id="email" name="email" placeholder="tu@email.com">
+                </div>
+                <button class="btn primary large" type="submit">💳 Proceder al Pago</button>
+            </form>
+
+            <a href="{{ url_for('index') }}" class="btn secondary large">← Continuar Comprando</a>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.cart-section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.empty-cart {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+}
+
+.empty-text {
+    color: #999;
+    margin-bottom: 24px;
+    font-size: 18px;
+}
+
+.cart-items {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 30px;
+}
+
+.cart-item {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: 80px 1fr 150px;
+    gap: 16px;
+    align-items: center;
+}
+
+.item-image {
+    font-size: 48px;
+    text-align: center;
+    background: #f5f5f5;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.item-details h3 {
+    margin: 0 0 4px 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.item-details p {
+    margin: 0 0 8px 0;
+    color: #999;
+    font-size: 13px;
+}
+
+.item-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: #666;
+}
+
+.item-actions {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.subtotal {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--secondary);
+}
+
+.remove {
+    background: #ffebee;
+    color: #c62828;
+    border: 1px solid #ffcdd2;
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.checkout-section {
+    background: white;
+    border: 2px solid var(--primary);
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.total-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.total-label {
+    font-size: 16px;
+    color: #666;
+    font-weight: 500;
+}
+
+.total-amount {
+    font-size: 28px;
+    color: var(--secondary);
+    font-weight: bold;
+}
+
+.checkout-form {
+    margin-bottom: 16px;
+}
+
+.checkout-form .form-group {
+    margin-bottom: 16px;
+}
+
+.checkout-form label {
+    display: block;
+    margin-bottom: 6px;
+    color: #333;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.checkout-form .input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.checkout-form .input:focus {
+    outline: none;
+    border-color: var(--secondary);
+}
+
+.large {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+}
+
+.secondary {
+    background: #f5f5f5;
+    color: #333;
+    border: 1px solid #e0e0e0;
+}
+
+.secondary:hover {
+    background: #efefef;
+}
+
+@media (max-width: 768px) {
+    .cart-item {
+        grid-template-columns: 60px 1fr;
+    }
+
+    .item-actions {
+        grid-column: 2;
+        justify-content: space-between;
+        flex-direction: row;
+    }
+
+    .subtotal {
+        order: 2;
+    }
+}
+
+@media (max-width: 480px) {
+    .cart-item {
+        grid-template-columns: 1fr;
+    }
+
+    .item-image {
+        grid-column: auto;
+    }
+
+    .item-actions {
+        grid-column: 1;
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}

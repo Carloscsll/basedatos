@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{ title or "Tech Market" }}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="{{ url_for('index') }}">💎 Shop</a>
+      <nav class="navbar-menu">
+        <a href="{{ url_for('index') }}" class="nav-link active">Inicio</a>
+        {% if session.get('admin') %}
+          <a href="{{ url_for('admin_productos') }}" class="nav-link">Panel Admin</a>
+        {% endif %}
+        {% if not session.get('admin') and session.get('usuario') %}
+          <a href="{{ url_for('carrito') }}" class="nav-link">Mi Carrito</a>
+        {% endif %}
+      </nav>
+      <div class="user-info">
+        {% if session.get('usuario') %}
+          <span class="user-badge">
+            {% if session.get('admin') %}
+              ⭐ Administrador
+            {% else %}
+              👤 {{ session.get('usuario') }}
+            {% endif %}
+          </span>
+          {% if not session.get('admin') %}
+            <a href="{{ url_for('carrito') }}" class="cart-icon" title="Mi Carrito">
+              🛒
+            </a>
+          {% endif %}
+          <a class="btn logout" href="{{ url_for('logout') }}">Salir</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="messages">
+          {% for m in messages %}
+            <div class="alert error">{{ m }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">© 2026 TechMarket - Tu tienda de electrónica confiable | Hecho con Flask</footer>
+</body>
+</html>

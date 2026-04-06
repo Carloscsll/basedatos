@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="header-bar">
+    <h1>Mi Tienda - Catálogo</h1>
+    <div class="user-info">
+        <span class="user-badge">👤 {{ usuario }}</span>
+        <form method="get" action="{{ url_for('logout') }}" style="margin: 0;">
+            <button class="btn logout" type="submit">Logout</button>
+        </form>
+    </div>
+</div>
+
+<div class="products-section">
+    <h2>📦 Productos Disponibles</h2>
+    <div class="grid">
+        {% for p in productos %}
+            <div class="card">
+                <h3>{{ p["nombre"] }}</h3>
+                <p>{{ p["descripcion"] or "Sin descripción" }}</p>
+                
+                <div class="card-footer">
+                    <div class="price-stock">
+                        <span class="price">${{ "%.2f"|format(p["precio"]) }}</span>
+                        <span class="stock">Stock: {{ p["stock"] }}</span>
+                    </div>
+
+                    <div class="card-actions">
+                        <a class="btn secondary" href="{{ url_for('producto', producto_id=p['id']) }}">Ver</a>
+                        <form method="post" action="{{ url_for('carrito_agregar') }}" style="display: flex; gap: 5px; flex: 1;">
+                            <input type="hidden" name="producto_id" value="{{ p['id'] }}">
+                            <input type="number" class="qty-input" name="cantidad" min="1" value="1">
+                            <button class="btn primary" type="submit" style="flex: 1;">Agregar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

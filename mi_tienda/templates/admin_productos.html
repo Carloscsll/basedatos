@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="header-bar">
+    <h1>Panel Administrador - Catálogo</h1>
+    <div class="user-info">
+        <span class="user-badge">� Administrador</span>
+        <form method="get" action="{{ url_for('logout') }}" style="margin: 0;">
+            <button class="btn logout" type="submit">Logout</button>
+        </form>
+    </div>
+</div>
+
+<div class="admin-section">
+    <h2>➕ Agregar Nuevo Producto</h2>
+    <form method="post" action="{{ url_for('producto_agregar') }}">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" name="nombre" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="descripcion">Descripción</label>
+                <input type="text" id="descripcion" name="descripcion">
+            </div>
+            
+            <div class="form-group">
+                <label for="precio">Precio</label>
+                <input type="number" id="precio" name="precio" step="0.01" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="stock">Stock</label>
+                <input type="number" id="stock" name="stock" required>
+            </div>
+        </div>
+        <button class="btn primary" type="submit">Agregar Producto</button>
+    </form>
+</div>
+
+<div class="products-section">
+    <h2>📦 Productos Disponibles</h2>
+    <div class="grid">
+        {% for p in productos %}
+            <div class="card">
+                <h3>{{ p["nombre"] }}</h3>
+                <p>{{ p["descripcion"] or "Sin descripción" }}</p>
+                
+                <div class="card-footer">
+                    <div class="price-stock">
+                        <span class="price">${{ "%.2f"|format(p["precio"]) }}</span>
+                        <span class="stock">Stock: {{ p["stock"] }}</span>
+                    </div>
+
+                    <!-- OPCIONES DE ADMINISTRADOR -->
+                    <div style="margin-bottom: 12px; display: flex; gap: 8px;">
+                        <!-- Actualizar Stock -->
+                        <form method="post" action="{{ url_for('producto_actualizar_stock', producto_id=p['id']) }}" style="display: flex; gap: 5px; flex: 1;">
+                            <input type="number" name="stock" min="0" value="{{ p['stock'] }}" placeholder="Stock" style="width: 70px; padding: 8px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 13px;">
+                            <button class="btn primary" type="submit" style="flex: 1; font-size: 12px;">Actualizar</button>
+                        </form>
+
+                        <!-- Eliminar Producto -->
+                        <form method="post" action="{{ url_for('producto_eliminar', producto_id=p['id']) }}" style="display: flex;" onsubmit="return confirm('¿Estás seguro de que deseas eliminar este producto?');">
+                            <button class="btn" type="submit" style="background: #ffebee; color: #c62828; border: 2px solid #ffcdd2; font-size: 12px; padding: 8px 10px;">🗑️ Eliminar</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
