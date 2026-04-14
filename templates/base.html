@@ -13,12 +13,14 @@
     <nav class="navlinks">
       <a class="cartlink" href="{{ url_for('index') }}">Inicio</a>
       <a class="cartlink" href="{{ url_for('tienda') }}">Tienda</a>
-      <a class="cartlink" href="{{ url_for('carrito') }}">Carrito</a>
       {% if usuario %}
         <a class="cartlink" href="{{ url_for('perfil') }}">Perfil</a>
+        {% if not es_admin %}
+          <a class="cartlink" href="{{ url_for('carrito') }}">Carrito</a>
+        {% endif %}
         {% if es_admin %}
           <a class="cartlink" href="{{ url_for('admin_avisos') }}">Avisos</a>
-          <a class="cartlink" href="{{ url_for('admin_reporte_ventas') }}">Reporte diario</a>
+          <a class="cartlink" href="{{ url_for('admin_reporte_ventas') }}">Costos y ganancias</a>
         {% endif %}
         <span class="userbadge">{{ usuario['nombre'] }} ({{ usuario['rol'] }})</span>
         <a class="cartlink" href="{{ url_for('logout') }}">Cerrar sesión</a>
@@ -27,6 +29,12 @@
       {% endif %}
     </nav>
   </header>
+
+  {% if request.endpoint != 'index' %}
+    <div class="container page-back-row">
+      <a class="btn" href="{{ url_for('index') }}">Volver a la página principal</a>
+    </div>
+  {% endif %}
 
   <main class="container">
     {% with messages = get_flashed_messages() %}

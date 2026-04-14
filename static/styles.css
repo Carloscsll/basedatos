@@ -154,6 +154,11 @@ body {
     flex-wrap: wrap;
 }
 
+.page-back-row {
+    margin-top: 12px;
+    margin-bottom: 0;
+}
+
 .muted {
     color: var(--text-2);
 }
@@ -165,6 +170,33 @@ body {
     padding: 4px 8px;
     border-radius: 999px;
     font-size: 12px;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.status-realizado {
+    background: rgba(212, 165, 116, 0.18);
+    border: 1px solid rgba(212, 165, 116, 0.45);
+    color: #8c5f2e;
+}
+
+.status-enviado {
+    background: rgba(115, 167, 223, 0.18);
+    border: 1px solid rgba(115, 167, 223, 0.45);
+    color: #1f5f9b;
+}
+
+.status-entregado {
+    background: rgba(101, 181, 123, 0.18);
+    border: 1px solid rgba(101, 181, 123, 0.45);
+    color: #2f6b40;
 }
 
 .btn {

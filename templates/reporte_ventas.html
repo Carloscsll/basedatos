@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>Reporte de ventas del día</h1>
+<h1>Costos y ganancias del día</h1>
 
 <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 16px;">
   <div class="card" style="text-align: left;">
@@ -13,6 +13,14 @@
     <p class="muted" style="margin: 0;">Ingresos hoy</p>
     <h2 style="margin: 6px 0 0 0;">${{ '%.2f'|format(reporte['total_ingresos']) }}</h2>
   </div>
+  <div class="card" style="text-align: left;">
+    <p class="muted" style="margin: 0;">Costos hoy</p>
+    <h2 style="margin: 6px 0 0 0;">${{ '%.2f'|format(reporte['total_costos']) }}</h2>
+  </div>
+  <div class="card" style="text-align: left;">
+    <p class="muted" style="margin: 0;">Ganancia hoy</p>
+    <h2 style="margin: 6px 0 0 0;">${{ '%.2f'|format(reporte['total_ganancias']) }}</h2>
+  </div>
 </div>
 
 {% if reporte['pedidos'] %}
@@ -21,9 +29,14 @@
       <tr>
         <th>Pedido</th>
         <th>Cliente</th>
+        <th>Dirección</th>
         <th>Email</th>
+        <th>Estatus</th>
         <th>Total</th>
+        <th>Costo</th>
+        <th>Ganancia</th>
         <th>Fecha</th>
+        <th>Actualizar</th>
       </tr>
     </thead>
     <tbody>
@@ -31,9 +44,23 @@
       <tr>
         <td>#{{ pedido['id'] }}</td>
         <td>{{ pedido['cliente_nombre'] }}</td>
+        <td>{{ pedido['cliente_direccion'] }}</td>
         <td>{{ pedido['cliente_email'] or '-' }}</td>
+        <td><span class="status-pill status-{{ pedido['estado'] }}">{{ pedido['estado'] }}</span></td>
         <td>${{ '%.2f'|format(pedido['total']) }}</td>
+        <td>${{ '%.2f'|format(pedido['costo_total'] or 0) }}</td>
+        <td>${{ '%.2f'|format((pedido['total'] or 0) - (pedido['costo_total'] or 0)) }}</td>
         <td>{{ pedido['creado_en'] }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin_pedido_actualizar_estado', pedido_id=pedido['id']) }}" class="row" style="justify-content: flex-start; align-items: center; margin-top: 0;">
+            <select name="estado" class="input" style="min-width: 140px;">
+              {% for estado in estados_pedido %}
+                <option value="{{ estado }}" {% if pedido['estado'] == estado %}selected{% endif %}>{{ estado }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn" type="submit">Guardar</button>
+          </form>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -44,5 +71,6 @@
 
 <div class="row">
   <a class="btn" href="{{ url_for('admin_productos') }}">Volver al panel</a>
+  <a class="btn" href="{{ url_for('index') }}">Ir al inicio</a>
 </div>
 {% endblock %}

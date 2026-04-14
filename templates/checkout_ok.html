@@ -1,6 +1,27 @@
 {% extends "base.html" %}
 {% block content %}
 <h1> Pedido confirmado</h1>
-<p>Tu pedido se registró con ID <strong>#{{ pedido_id }}</strong>.</p>
-<a class="btn" href="{{ url_for('tienda') }}">Volver a la tienda</a>
+
+<div class="card" style="max-width: 720px; text-align: left;">
+	<p>Tu pedido se registró con ID <strong>#{{ pedido_id }}</strong>.</p>
+	{% if pedido %}
+		<p><strong>Dirección:</strong> {{ pedido['cliente_direccion'] }}</p>
+		<p><strong>Estatus:</strong> {{ pedido['estado'] }}</p>
+		<p><strong>Total:</strong> ${{ '%.2f'|format(pedido['total']) }}</p>
+	{% endif %}
+
+	{% if items %}
+		<h2 style="margin-top: 18px;">Detalle</h2>
+		<ul>
+			{% for item in items %}
+				<li>{{ item['producto_nombre'] }} x{{ item['cantidad'] }}</li>
+			{% endfor %}
+		</ul>
+	{% endif %}
+
+	<div class="row">
+		<a class="btn primary" href="{{ url_for('tienda') }}">Volver a la tienda</a>
+		<a class="btn" href="{{ url_for('index') }}">Ir al inicio</a>
+	</div>
+</div>
 {% endblock %}

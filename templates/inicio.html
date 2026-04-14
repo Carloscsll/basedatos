@@ -26,6 +26,19 @@
           <strong>${{ '%.2f'|format(p['precio']) }}</strong>
           <a class="btn" href="{{ url_for('producto', producto_id=p['id']) }}">Ver</a>
         </div>
+        <div class="row">
+          <form method="post" action="{{ url_for('carrito_agregar') }}">
+            <input type="hidden" name="producto_id" value="{{ p['id'] }}">
+            <input type="hidden" name="cantidad" value="1">
+            <button class="btn" type="submit">Agregar al carrito</button>
+          </form>
+          <form method="post" action="{{ url_for('carrito_agregar') }}">
+            <input type="hidden" name="producto_id" value="{{ p['id'] }}">
+            <input type="hidden" name="cantidad" value="1">
+            <input type="hidden" name="redirect_to" value="carrito">
+            <button class="btn primary" type="submit">Comprar ahora</button>
+          </form>
+        </div>
       </article>
     {% endfor %}
   </div>

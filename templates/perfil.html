@@ -13,7 +13,11 @@
 
   <div class="row">
     <a class="btn" href="{{ url_for('tienda') }}">Ir a tienda</a>
-    <a class="btn primary" href="{{ url_for('carrito') }}">Ir al carrito</a>
+    {% if not es_admin %}
+      <a class="btn primary" href="{{ url_for('carrito') }}">Ir al carrito</a>
+    {% else %}
+      <a class="btn primary" href="{{ url_for('admin_productos') }}">Ir al panel</a>
+    {% endif %}
   </div>
 </div>
 {% endblock %}

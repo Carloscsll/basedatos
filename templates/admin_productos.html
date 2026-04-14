@@ -19,6 +19,7 @@
         <th>Imagen</th>
         <th>Nombre</th>
         <th>Precio</th>
+        <th>Costo</th>
         <th>Stock</th>
         <th>Acciones</th>
       </tr>
@@ -36,6 +37,7 @@
         </td>
         <td>{{ p['nombre'] }}</td>
         <td>${{ "%.2f"|format(p['precio']) }}</td>
+        <td>${{ "%.2f"|format(p['costo'] or 0) }}</td>
         <td>{{ p['stock'] }}</td>
         <td>
           <div style="display: flex; gap: 8px;">

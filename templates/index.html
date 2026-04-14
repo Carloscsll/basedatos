@@ -31,6 +31,12 @@
           <input class="qty" type="number" name="cantidad" min="1" value="1">
           <button class="btn primary" type="submit">Agregar</button>
         </form>
+        <form method="post" action="{{ url_for('carrito_agregar') }}">
+          <input type="hidden" name="producto_id" value="{{ p['id'] }}">
+          <input type="hidden" name="cantidad" value="1">
+          <input type="hidden" name="redirect_to" value="carrito">
+          <button class="btn" type="submit">Comprar</button>
+        </form>
          {% if es_admin %}
          <a class="btn" href="{{ url_for('producto_editar', producto_id=p['id']) }}" style="background: #f5e8d6; border-color: #d8be95;">Editar</a>
          {% endif %}

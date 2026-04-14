@@ -18,6 +18,8 @@ db.semilla_productos()
 db.reemplazar_imagenes_externas_por_local("foto portada.jpg")
 # Nota: se conserva la base de usuarios para que el registro/perfil funcione entre reinicios.
 
+ESTADOS_PEDIDO = ["realizado", "enviado", "entregado"]
+
 
 def normalizar_nombre_imagen(valor):
     valor = (valor or "").strip()
@@ -124,7 +126,11 @@ def admin_requerido(fn):
     return wrapper
 
 
-def validar_formulario_producto(nombre, imagen_url, precio, stock, endpoint_error, endpoint_args=None):
+def estado_pedido_valido(estado):
+    return estado in ESTADOS_PEDIDO
+
+
+def validar_formulario_producto(nombre, imagen_url, precio, stock, costo, endpoint_error, endpoint_args=None):
     # Centraliza validaciones para reutilizarlas en crear/editar producto.
     endpoint_args = endpoint_args or {}
 
@@ -142,6 +148,10 @@ def validar_formulario_producto(nombre, imagen_url, precio, stock, endpoint_erro
 
     if stock is None or stock < 0:
         flash("El stock debe ser un entero mayor o igual a 0.")
+        return redirect(url_for(endpoint_error, **endpoint_args))
+
+    if costo is None or costo < 0:
+        flash("El costo debe ser un número mayor o igual a 0.")
         return redirect(url_for(endpoint_error, **endpoint_args))
 
     return None
@@ -280,18 +290,20 @@ def producto_nuevo():
         imagen_url = normalizar_nombre_imagen(imagen_valor)
         precio = request.form.get("precio", type=float)
         stock = request.form.get("stock", type=int)
+        costo = request.form.get("costo", type=float)
 
         error = validar_formulario_producto(
             nombre=nombre,
             imagen_url=imagen_url,
             precio=precio,
             stock=stock,
+            costo=costo,
             endpoint_error="producto_nuevo",
         )
         if error:
             return error
 
-        producto_id = db.crear_producto(nombre, descripcion, precio, stock, imagen_url=imagen_url)
+        producto_id = db.crear_producto(nombre, descripcion, precio, stock, costo, imagen_url=imagen_url)
         if not producto_id:
             flash("No se pudo guardar el producto.")
             return redirect(url_for("producto_nuevo"))
@@ -365,9 +377,25 @@ def admin_aviso_eliminar(aviso_id):
 @app.route("/admin/reporte-ventas")
 @admin_requerido
 def admin_reporte_ventas():
-    # Reporte diario solicitado en el examen.
-    reporte = db.reporte_ventas_hoy()
-    return render_template("reporte_ventas.html", reporte=reporte)
+    reporte = db.reporte_finanzas_hoy()
+    return render_template("reporte_ventas.html", reporte=reporte, estados_pedido=ESTADOS_PEDIDO)
+
+
+@app.route("/admin/pedidos/<int:pedido_id>/estado", methods=["POST"])
+@admin_requerido
+def admin_pedido_actualizar_estado(pedido_id):
+    estado = request.form.get("estado", "").strip()
+
+    if not estado_pedido_valido(estado):
+        flash("Estado de pedido inválido.")
+        return redirect(url_for("admin_reporte_ventas"))
+
+    if db.actualizar_estado_pedido(pedido_id, estado):
+        flash("Estado del pedido actualizado.")
+    else:
+        flash("No se pudo actualizar el pedido.")
+
+    return redirect(url_for("admin_reporte_ventas"))
 
 @app.route("/producto/<int:producto_id>/editar", methods=["GET", "POST"])
 @admin_requerido
@@ -383,19 +411,21 @@ def producto_editar(producto_id):
         imagen_url = normalizar_nombre_imagen(request.form.get("imagen_url", ""))
         precio = request.form.get("precio", type=float)
         stock = request.form.get("stock", type=int)
+        costo = request.form.get("costo", type=float)
 
         error = validar_formulario_producto(
             nombre=nombre,
             imagen_url=imagen_url,
             precio=precio,
             stock=stock,
+            costo=costo,
             endpoint_error="producto_editar",
             endpoint_args={"producto_id": producto_id},
         )
         if error:
             return error
 
-        if db.actualizar_producto(producto_id, nombre, descripcion, precio, stock, imagen_url):
+        if db.actualizar_producto(producto_id, nombre, descripcion, precio, stock, costo, imagen_url):
             flash("Producto actualizado correctamente.")
             return redirect(url_for("admin_productos"))
         else:
@@ -423,6 +453,7 @@ def producto_eliminar(producto_id):
 def carrito_agregar():
     pid = request.form.get("producto_id", type=int)
     qty = request.form.get("cantidad", type=int, default=1)
+    redirect_to = request.form.get("redirect_to", "").strip()
 
     p = db.obtener_producto(pid)
     if not p:
@@ -433,6 +464,13 @@ def carrito_agregar():
     cart[str(pid)] = int(cart.get(str(pid), 0)) + max(qty, 1)
     session["carrito"] = cart
     flash("Agregado al carrito.")
+
+    if redirect_to == "carrito":
+        return redirect(url_for("carrito"))
+
+    if redirect_to == "index":
+        return redirect(url_for("index"))
+
     return redirect(request.referrer or url_for("tienda"))
 
 @app.route("/carrito")
@@ -463,9 +501,14 @@ def carrito_quitar():
 def checkout():
     nombre = request.form.get("nombre", "").strip()
     email = request.form.get("email", "").strip() or None
+    direccion = request.form.get("direccion", "").strip()
 
     if not nombre:
         flash("Escribe tu nombre para continuar.")
+        return redirect(url_for("carrito"))
+
+    if not direccion:
+        flash("Escribe tu dirección para continuar.")
         return redirect(url_for("carrito"))
 
     cart = carrito_session()
@@ -475,13 +518,15 @@ def checkout():
 
     items = [{"producto_id": int(pid), "cantidad": int(qty)} for pid, qty in cart.items()]
 
-    pedido_id = db.crear_pedido(nombre, email, items)
+    pedido_id = db.crear_pedido(nombre, email, direccion, items)
     if not pedido_id:
         flash("No se pudo procesar el pedido (¿stock insuficiente?).")
         return redirect(url_for("carrito"))
 
     session["carrito"] = {}
-    return render_template("checkout_ok.html", pedido_id=pedido_id)
+    pedido = db.obtener_pedido(pedido_id)
+    detalle_items = db.listar_items_pedido(pedido_id)
+    return render_template("checkout_ok.html", pedido_id=pedido_id, pedido=pedido, items=detalle_items)
 
 if __name__ == "__main__":
     app.run(debug=True)

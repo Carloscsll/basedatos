@@ -38,6 +38,7 @@ class BaseDatosTienda:
                     descripcion TEXT,
                     imagen_url TEXT,
                     precio REAL NOT NULL CHECK(precio >= 0),
+                    costo REAL NOT NULL DEFAULT 0 CHECK(costo >= 0),
                     stock INTEGER NOT NULL DEFAULT 0 CHECK(stock >= 0)
                 );
             """)
@@ -47,12 +48,16 @@ class BaseDatosTienda:
             cols = [row["name"] for row in self.cursor.fetchall()]
             if "imagen_url" not in cols:
                 self.cursor.execute("ALTER TABLE productos ADD COLUMN imagen_url TEXT;")
+            if "costo" not in cols:
+                self.cursor.execute("ALTER TABLE productos ADD COLUMN costo REAL NOT NULL DEFAULT 0;")
 
             self.cursor.execute("""
                 CREATE TABLE IF NOT EXISTS pedidos(
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     cliente_nombre TEXT NOT NULL,
                     cliente_email TEXT,
+                    cliente_direccion TEXT NOT NULL DEFAULT '',
+                    estado TEXT NOT NULL DEFAULT 'realizado' CHECK(estado IN ('realizado', 'enviado', 'entregado')),
                     total REAL NOT NULL CHECK(total >= 0),
                     creado_en TEXT NOT NULL DEFAULT (datetime('now'))
                 );
@@ -75,12 +80,25 @@ class BaseDatosTienda:
                     producto_id INTEGER NOT NULL,
                     cantidad INTEGER NOT NULL CHECK(cantidad > 0),
                     precio_unit REAL NOT NULL CHECK(precio_unit >= 0),
+                    costo_unit REAL NOT NULL DEFAULT 0 CHECK(costo_unit >= 0),
                     FOREIGN KEY(pedido_id) REFERENCES pedidos(id)
                         ON DELETE CASCADE ON UPDATE CASCADE,
                     FOREIGN KEY(producto_id) REFERENCES productos(id)
                         ON DELETE RESTRICT ON UPDATE CASCADE
                 );
             """)
+
+            self.cursor.execute("PRAGMA table_info(pedidos);")
+            cols_pedidos = [row["name"] for row in self.cursor.fetchall()]
+            if "cliente_direccion" not in cols_pedidos:
+                self.cursor.execute("ALTER TABLE pedidos ADD COLUMN cliente_direccion TEXT NOT NULL DEFAULT '';")
+            if "estado" not in cols_pedidos:
+                self.cursor.execute("ALTER TABLE pedidos ADD COLUMN estado TEXT NOT NULL DEFAULT 'realizado';")
+
+            self.cursor.execute("PRAGMA table_info(pedido_items);")
+            cols_items = [row["name"] for row in self.cursor.fetchall()]
+            if "costo_unit" not in cols_items:
+                self.cursor.execute("ALTER TABLE pedido_items ADD COLUMN costo_unit REAL NOT NULL DEFAULT 0;")
 
             self.cursor.execute("""
                 CREATE TABLE IF NOT EXISTS avisos(
@@ -96,12 +114,12 @@ class BaseDatosTienda:
             print(f"[DB] Error creando tablas: {e}")
 
     # --------- Productos (CRUD) ----------
-    def crear_producto(self, nombre, descripcion, precio, stock, imagen_url=None):
+    def crear_producto(self, nombre, descripcion, precio, stock, costo=0, imagen_url=None):
         try:
             self.cursor.execute("""
-                INSERT INTO productos(nombre, descripcion, imagen_url, precio, stock)
-                VALUES(?,?,?,?,?);
-            """, (nombre.strip(), descripcion, (imagen_url or "").strip() or None, float(precio), int(stock)))
+                INSERT INTO productos(nombre, descripcion, imagen_url, precio, costo, stock)
+                VALUES(?,?,?,?,?,?);
+            """, (nombre.strip(), descripcion, (imagen_url or "").strip() or None, float(precio), float(costo), int(stock)))
             self.con.commit()
             return self.cursor.lastrowid
         except Error as e:
@@ -148,16 +166,17 @@ class BaseDatosTienda:
             print(f"[DB] Error actualizando stock: {e}")
             return False
 
-    def actualizar_producto(self, producto_id, nombre, descripcion, precio, stock, imagen_url=None):
+    def actualizar_producto(self, producto_id, nombre, descripcion, precio, stock, costo, imagen_url=None):
         try:
             self.cursor.execute("""
                 UPDATE productos
-                SET nombre=?, descripcion=?, precio=?, stock=?, imagen_url=?
+                SET nombre=?, descripcion=?, precio=?, costo=?, stock=?, imagen_url=?
                 WHERE id=?;
             """, (
                 nombre.strip(),
                 descripcion.strip() if descripcion else None,
                 float(precio),
+                float(costo),
                 int(stock),
                 (imagen_url or "").strip() or None,
                 int(producto_id)
@@ -199,7 +218,7 @@ class BaseDatosTienda:
             return None
 
     # --------- Pedidos ----------
-    def crear_pedido(self, cliente_nombre, cliente_email, items):
+    def crear_pedido(self, cliente_nombre, cliente_email, cliente_direccion, items):
         """
         items: lista de dicts: [{"producto_id":1, "cantidad":2}, ...]
         - Calcula total
@@ -217,7 +236,7 @@ class BaseDatosTienda:
                 pid = int(it["producto_id"])
                 qty = int(it["cantidad"])
 
-                self.cursor.execute("SELECT id, precio, stock FROM productos WHERE id=?;", (pid,))
+                self.cursor.execute("SELECT id, precio, costo, stock FROM productos WHERE id=?;", (pid,))
                 p = self.cursor.fetchone()
                 if not p:
                     raise ValueError(f"Producto {pid} no existe")
@@ -225,20 +244,21 @@ class BaseDatosTienda:
                     raise ValueError(f"Stock insuficiente para producto {pid}")
 
                 precio_unit = float(p["precio"])
+                costo_unit = float(p["costo"] or 0)
                 total += precio_unit * qty
-                lineas.append((pid, qty, precio_unit))
+                lineas.append((pid, qty, precio_unit, costo_unit))
 
             self.cursor.execute("""
-                INSERT INTO pedidos(cliente_nombre, cliente_email, total)
-                VALUES(?,?,?);
-            """, (cliente_nombre.strip(), cliente_email, total))
+                INSERT INTO pedidos(cliente_nombre, cliente_email, cliente_direccion, estado, total)
+                VALUES(?,?,?,?,?);
+            """, (cliente_nombre.strip(), cliente_email, cliente_direccion.strip(), "realizado", total))
             pedido_id = self.cursor.lastrowid
 
-            for (pid, qty, precio_unit) in lineas:
+            for (pid, qty, precio_unit, costo_unit) in lineas:
                 self.cursor.execute("""
-                    INSERT INTO pedido_items(pedido_id, producto_id, cantidad, precio_unit)
-                    VALUES(?,?,?,?);
-                """, (pedido_id, pid, qty, precio_unit))
+                    INSERT INTO pedido_items(pedido_id, producto_id, cantidad, precio_unit, costo_unit)
+                    VALUES(?,?,?,?,?);
+                """, (pedido_id, pid, qty, precio_unit, costo_unit))
 
                 # descontar stock
                 self.cursor.execute("""
@@ -258,12 +278,12 @@ class BaseDatosTienda:
         """Crea 3 productos de ejemplo base."""
         try:
             base = [
-                ("Playera", "Playera 100% algodón", 199.0, 20, "foto portada.jpg"),
-                ("Taza", "Taza cerámica 350ml", 129.0, 15, "foto portada.jpg"),
-                ("Sticker Pack", "Paquete de 10 stickers", 59.0, 50, "foto portada.jpg"),
+                ("Playera", "Playera 100% algodón", 199.0, 120.0, 20, "foto portada.jpg"),
+                ("Taza", "Taza cerámica 350ml", 129.0, 70.0, 15, "foto portada.jpg"),
+                ("Sticker Pack", "Paquete de 10 stickers", 59.0, 20.0, 50, "foto portada.jpg"),
             ]
 
-            for nombre, descripcion, precio, stock, imagen_local in base:
+            for nombre, descripcion, precio, costo, stock, imagen_local in base:
                 self.cursor.execute("SELECT 1 FROM productos WHERE nombre=? LIMIT 1;", (nombre,))
                 existe = self.cursor.fetchone()
                 if not existe:
@@ -272,6 +292,7 @@ class BaseDatosTienda:
                         descripcion,
                         precio,
                         stock,
+                        costo=costo,
                         imagen_url=imagen_local,
                     )
         except Error as e:
@@ -351,8 +372,42 @@ class BaseDatosTienda:
             return False
 
     # --------- Reportes ----------
-    def reporte_ventas_hoy(self):
-        """Devuelve resumen del dia y detalle de pedidos de hoy (hora local)."""
+    def obtener_pedido(self, pedido_id):
+        try:
+            self.cursor.execute("SELECT * FROM pedidos WHERE id=?;", (int(pedido_id),))
+            return self.cursor.fetchone()
+        except Error as e:
+            print(f"[DB] Error obteniendo pedido: {e}")
+            return None
+
+    def listar_items_pedido(self, pedido_id):
+        try:
+            self.cursor.execute(
+                """
+                SELECT pi.*, p.nombre AS producto_nombre
+                FROM pedido_items pi
+                JOIN productos p ON p.id = pi.producto_id
+                WHERE pi.pedido_id=?
+                ORDER BY pi.id ASC;
+                """,
+                (int(pedido_id),),
+            )
+            return self.cursor.fetchall()
+        except Error as e:
+            print(f"[DB] Error listando items del pedido: {e}")
+            return []
+
+    def actualizar_estado_pedido(self, pedido_id, estado):
+        try:
+            self.cursor.execute("UPDATE pedidos SET estado=? WHERE id=?;", (estado, int(pedido_id)))
+            self.con.commit()
+            return self.cursor.rowcount > 0
+        except Error as e:
+            print(f"[DB] Error actualizando estado de pedido: {e}")
+            return False
+
+    def reporte_finanzas_hoy(self):
+        """Devuelve resumen de ingresos, costos, ganancias y pedidos de hoy (hora local)."""
         try:
             self.cursor.execute(
                 """
@@ -367,19 +422,34 @@ class BaseDatosTienda:
 
             self.cursor.execute(
                 """
-                SELECT id, cliente_nombre, cliente_email, total, creado_en
-                FROM pedidos
-                WHERE date(creado_en, 'localtime') = date('now', 'localtime')
-                ORDER BY id DESC;
+                SELECT
+                    p.id,
+                    p.cliente_nombre,
+                    p.cliente_email,
+                    p.cliente_direccion,
+                    p.estado,
+                    p.total,
+                    p.creado_en,
+                    COALESCE(SUM(pi.cantidad * pi.costo_unit), 0) AS costo_total
+                FROM pedidos p
+                LEFT JOIN pedido_items pi ON pi.pedido_id = p.id
+                WHERE date(p.creado_en, 'localtime') = date('now', 'localtime')
+                GROUP BY p.id
+                ORDER BY p.id DESC;
                 """
             )
             pedidos = self.cursor.fetchall()
 
+            total_ingresos = float(resumen["total_ingresos"] or 0)
+            total_costos = float(sum(float(pedido["costo_total"] or 0) for pedido in pedidos))
+
             return {
                 "total_pedidos": int(resumen["total_pedidos"] or 0),
-                "total_ingresos": float(resumen["total_ingresos"] or 0),
+                "total_ingresos": total_ingresos,
+                "total_costos": total_costos,
+                "total_ganancias": total_ingresos - total_costos,
                 "pedidos": pedidos,
             }
         except Error as e:
             print(f"[DB] Error generando reporte de ventas: {e}")
-            return {"total_pedidos": 0, "total_ingresos": 0.0, "pedidos": []}
+            return {"total_pedidos": 0, "total_ingresos": 0.0, "total_costos": 0.0, "total_ganancias": 0.0, "pedidos": []}
