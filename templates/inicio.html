@@ -30,4 +30,24 @@
     {% endfor %}
   </div>
 </section>
+
+<section class="featured-section">
+  <div class="section-head row">
+    <h2>Avisos</h2>
+  </div>
+
+  {% if avisos %}
+    <div class="grid">
+      {% for aviso in avisos %}
+        <article class="card" style="text-align: left;">
+          <h3 style="margin-top: 0;">{{ aviso['titulo'] }}</h3>
+          <p class="muted" style="white-space: pre-wrap;">{{ aviso['mensaje'] }}</p>
+          <small class="muted">Publicado: {{ aviso['creado_en'] }}</small>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="muted">No hay avisos por el momento.</p>
+  {% endif %}
+</section>
 {% endblock %}

@@ -15,6 +15,11 @@
       <a class="cartlink" href="{{ url_for('tienda') }}">Tienda</a>
       <a class="cartlink" href="{{ url_for('carrito') }}">Carrito</a>
       {% if usuario %}
+        <a class="cartlink" href="{{ url_for('perfil') }}">Perfil</a>
+        {% if es_admin %}
+          <a class="cartlink" href="{{ url_for('admin_avisos') }}">Avisos</a>
+          <a class="cartlink" href="{{ url_for('admin_reporte_ventas') }}">Reporte diario</a>
+        {% endif %}
         <span class="userbadge">{{ usuario['nombre'] }} ({{ usuario['rol'] }})</span>
         <a class="cartlink" href="{{ url_for('logout') }}">Cerrar sesión</a>
       {% else %}

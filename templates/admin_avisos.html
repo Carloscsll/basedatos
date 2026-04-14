@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Sección de avisos</h1>
+
+<div class="card" style="max-width: 760px; text-align: left; margin-bottom: 16px;">
+  <h2 style="margin-top: 0;">Nuevo aviso</h2>
+  <form method="post" class="form-card" style="max-width: 100%;">
+    <!-- Titulo corto para identificar el aviso -->
+    <label>
+      Título
+      <input type="text" name="titulo" maxlength="120" required>
+    </label>
+
+    <!-- Mensaje principal del aviso -->
+    <label>
+      Mensaje
+      <textarea name="mensaje" rows="4" required></textarea>
+    </label>
+
+    <div class="row">
+      <button class="btn primary" type="submit">Publicar aviso</button>
+      <a class="btn" href="{{ url_for('admin_productos') }}">Volver al panel</a>
+    </div>
+  </form>
+</div>
+
+{% if avisos %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Título</th>
+        <th>Mensaje</th>
+        <th>Fecha</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for aviso in avisos %}
+        <tr>
+          <td>#{{ aviso['id'] }}</td>
+          <td>{{ aviso['titulo'] }}</td>
+          <td style="max-width: 400px; white-space: pre-wrap;">{{ aviso['mensaje'] }}</td>
+          <td>{{ aviso['creado_en'] }}</td>
+          <td>
+            <form method="post" action="{{ url_for('admin_aviso_eliminar', aviso_id=aviso['id']) }}">
+              <button class="btn" type="submit" onclick="return confirm('¿Eliminar aviso?');">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="muted">Todavía no hay avisos publicados.</p>
+{% endif %}
+{% endblock %}

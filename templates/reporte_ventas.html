@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Reporte de ventas del día</h1>
+
+<div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); margin-bottom: 16px;">
+  <div class="card" style="text-align: left;">
+    <!-- Cantidad total de pedidos del dia actual -->
+    <p class="muted" style="margin: 0;">Pedidos hoy</p>
+    <h2 style="margin: 6px 0 0 0;">{{ reporte['total_pedidos'] }}</h2>
+  </div>
+  <div class="card" style="text-align: left;">
+    <!-- Suma de ingresos del dia actual -->
+    <p class="muted" style="margin: 0;">Ingresos hoy</p>
+    <h2 style="margin: 6px 0 0 0;">${{ '%.2f'|format(reporte['total_ingresos']) }}</h2>
+  </div>
+</div>
+
+{% if reporte['pedidos'] %}
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Pedido</th>
+        <th>Cliente</th>
+        <th>Email</th>
+        <th>Total</th>
+        <th>Fecha</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pedido in reporte['pedidos'] %}
+      <tr>
+        <td>#{{ pedido['id'] }}</td>
+        <td>{{ pedido['cliente_nombre'] }}</td>
+        <td>{{ pedido['cliente_email'] or '-' }}</td>
+        <td>${{ '%.2f'|format(pedido['total']) }}</td>
+        <td>{{ pedido['creado_en'] }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="muted">No hay ventas registradas hoy.</p>
+{% endif %}
+
+<div class="row">
+  <a class="btn" href="{{ url_for('admin_productos') }}">Volver al panel</a>
+</div>
+{% endblock %}

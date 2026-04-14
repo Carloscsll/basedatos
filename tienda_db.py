@@ -82,6 +82,15 @@ class BaseDatosTienda:
                 );
             """)
 
+            self.cursor.execute("""
+                CREATE TABLE IF NOT EXISTS avisos(
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    titulo TEXT NOT NULL,
+                    mensaje TEXT NOT NULL,
+                    creado_en TEXT NOT NULL DEFAULT (datetime('now'))
+                );
+            """)
+
             self.con.commit()
         except Error as e:
             print(f"[DB] Error creando tablas: {e}")
@@ -299,3 +308,78 @@ class BaseDatosTienda:
         except Error as e:
             print(f"[DB] Error limpiando usuarios: {e}")
             return 0
+
+    # --------- Avisos ----------
+    def crear_aviso(self, titulo, mensaje):
+        try:
+            self.cursor.execute(
+                """
+                INSERT INTO avisos(titulo, mensaje)
+                VALUES(?, ?);
+                """,
+                (titulo.strip(), mensaje.strip()),
+            )
+            self.con.commit()
+            return self.cursor.lastrowid
+        except Error as e:
+            print(f"[DB] Error creando aviso: {e}")
+            return None
+
+    def listar_avisos(self, limit=50):
+        try:
+            self.cursor.execute(
+                """
+                SELECT *
+                FROM avisos
+                ORDER BY id DESC
+                LIMIT ?;
+                """,
+                (int(limit),),
+            )
+            return self.cursor.fetchall()
+        except Error as e:
+            print(f"[DB] Error listando avisos: {e}")
+            return []
+
+    def eliminar_aviso(self, aviso_id):
+        try:
+            self.cursor.execute("DELETE FROM avisos WHERE id=?;", (int(aviso_id),))
+            self.con.commit()
+            return self.cursor.rowcount > 0
+        except Error as e:
+            print(f"[DB] Error eliminando aviso: {e}")
+            return False
+
+    # --------- Reportes ----------
+    def reporte_ventas_hoy(self):
+        """Devuelve resumen del dia y detalle de pedidos de hoy (hora local)."""
+        try:
+            self.cursor.execute(
+                """
+                SELECT
+                    COUNT(*) AS total_pedidos,
+                    COALESCE(SUM(total), 0) AS total_ingresos
+                FROM pedidos
+                WHERE date(creado_en, 'localtime') = date('now', 'localtime');
+                """
+            )
+            resumen = self.cursor.fetchone()
+
+            self.cursor.execute(
+                """
+                SELECT id, cliente_nombre, cliente_email, total, creado_en
+                FROM pedidos
+                WHERE date(creado_en, 'localtime') = date('now', 'localtime')
+                ORDER BY id DESC;
+                """
+            )
+            pedidos = self.cursor.fetchall()
+
+            return {
+                "total_pedidos": int(resumen["total_pedidos"] or 0),
+                "total_ingresos": float(resumen["total_ingresos"] or 0),
+                "pedidos": pedidos,
+            }
+        except Error as e:
+            print(f"[DB] Error generando reporte de ventas: {e}")
+            return {"total_pedidos": 0, "total_ingresos": 0.0, "pedidos": []}

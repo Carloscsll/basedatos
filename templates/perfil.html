@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Mi perfil</h1>
+
+<div class="card" style="max-width: 600px; text-align: left;">
+  <!-- Datos basicos del usuario autenticado -->
+  <p><strong>Nombre:</strong> {{ usuario['nombre'] }}</p>
+  <p><strong>Usuario:</strong> {{ usuario['username'] }}</p>
+  <p><strong>Rol:</strong> {{ usuario['rol'] }}</p>
+
+  <!-- Resumen simple del carrito para el usuario general -->
+  <p><strong>Productos en carrito:</strong> {{ total_items_carrito }}</p>
+
+  <div class="row">
+    <a class="btn" href="{{ url_for('tienda') }}">Ir a tienda</a>
+    <a class="btn primary" href="{{ url_for('carrito') }}">Ir al carrito</a>
+  </div>
+</div>
+{% endblock %}

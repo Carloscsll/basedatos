@@ -16,7 +16,7 @@ def descargar_imagen(filename):
 db = BaseDatosTienda(ruta="./", bd="tienda.sqlite3")
 db.semilla_productos()
 db.reemplazar_imagenes_externas_por_local("foto portada.jpg")
-db.limpiar_usuarios_no_admin()  # Limpia usuarios registrados, mantiene solo admin
+# Nota: se conserva la base de usuarios para que el registro/perfil funcione entre reinicios.
 
 
 def normalizar_nombre_imagen(valor):
@@ -106,6 +106,45 @@ def login_requerido(fn):
         return fn(*args, **kwargs)
 
     return wrapper
+
+
+def admin_requerido(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not usuario_autenticado():
+            flash("Inicia sesión para continuar.")
+            return redirect(url_for("login", next=request.path))
+
+        if not es_admin():
+            flash("Solo el administrador puede acceder a esta sección.")
+            return redirect(url_for("index"))
+
+        return fn(*args, **kwargs)
+
+    return wrapper
+
+
+def validar_formulario_producto(nombre, imagen_url, precio, stock, endpoint_error, endpoint_args=None):
+    # Centraliza validaciones para reutilizarlas en crear/editar producto.
+    endpoint_args = endpoint_args or {}
+
+    if not nombre:
+        flash("El nombre del producto es obligatorio.")
+        return redirect(url_for(endpoint_error, **endpoint_args))
+
+    if imagen_url is None:
+        flash("La imagen debe ser un archivo local de la carpeta imagenes, no una URL externa.")
+        return redirect(url_for(endpoint_error, **endpoint_args))
+
+    if precio is None or precio < 0:
+        flash("El precio debe ser un número mayor o igual a 0.")
+        return redirect(url_for(endpoint_error, **endpoint_args))
+
+    if stock is None or stock < 0:
+        flash("El stock debe ser un entero mayor o igual a 0.")
+        return redirect(url_for(endpoint_error, **endpoint_args))
+
+    return None
 
 
 @app.context_processor
@@ -205,13 +244,24 @@ def logout():
 @app.route("/")
 def index():
     destacados = db.listar_productos()[:3]
-    return render_template("inicio.html", destacados=destacados)
+    # Avisos visibles para cualquier visitante en la portada.
+    avisos = db.listar_avisos(limit=5)
+    return render_template("inicio.html", destacados=destacados, avisos=avisos)
 
 
 @app.route("/tienda")
 def tienda():
     productos = db.listar_productos()[:3]
     return render_template("index.html", productos=productos)
+
+
+@app.route("/perfil")
+@login_requerido
+def perfil():
+    # Vista simple para cumplir el requisito de perfil de usuario general.
+    cart = carrito_session()
+    total_items_carrito = sum(int(qty) for qty in cart.values())
+    return render_template("perfil.html", total_items_carrito=total_items_carrito)
 
 @app.route("/producto/<int:producto_id>")
 def producto(producto_id):
@@ -221,12 +271,8 @@ def producto(producto_id):
     return render_template("producto.html", p=p)
 
 @app.route("/productos/nuevo", methods=["GET", "POST"])
-@login_requerido
+@admin_requerido
 def producto_nuevo():
-    if not es_admin():
-        flash("Solo el administrador puede crear productos.")
-        return redirect(url_for("index"))
-
     if request.method == "POST":
         nombre = request.form.get("nombre", "").strip()
         descripcion = request.form.get("descripcion", "").strip()
@@ -235,21 +281,15 @@ def producto_nuevo():
         precio = request.form.get("precio", type=float)
         stock = request.form.get("stock", type=int)
 
-        if imagen_url is None:
-            flash("La imagen debe ser un archivo local de la carpeta imagenes, no una URL externa.")
-            return redirect(url_for("producto_nuevo"))
-
-        if not nombre:
-            flash("El nombre del producto es obligatorio.")
-            return redirect(url_for("producto_nuevo"))
-
-        if precio is None or precio < 0:
-            flash("El precio debe ser un número mayor o igual a 0.")
-            return redirect(url_for("producto_nuevo"))
-
-        if stock is None or stock < 0:
-            flash("El stock debe ser un entero mayor o igual a 0.")
-            return redirect(url_for("producto_nuevo"))
+        error = validar_formulario_producto(
+            nombre=nombre,
+            imagen_url=imagen_url,
+            precio=precio,
+            stock=stock,
+            endpoint_error="producto_nuevo",
+        )
+        if error:
+            return error
 
         producto_id = db.crear_producto(nombre, descripcion, precio, stock, imagen_url=imagen_url)
         if not producto_id:
@@ -263,12 +303,8 @@ def producto_nuevo():
 
 
 @app.route("/producto/<int:producto_id>/imagen", methods=["POST"])
-@login_requerido
+@admin_requerido
 def producto_actualizar_imagen(producto_id):
-    if not es_admin():
-        flash("Solo el administrador puede cambiar imágenes de productos.")
-        return redirect(url_for("tienda"))
-
     p = db.obtener_producto(producto_id)
     if not p:
         flash("Producto no encontrado.")
@@ -287,22 +323,55 @@ def producto_actualizar_imagen(producto_id):
     return redirect(request.referrer or url_for("tienda"))
 
 @app.route("/admin/productos")
-@login_requerido
+@admin_requerido
 def admin_productos():
-    if not es_admin():
-        flash("Solo el administrador puede acceder a esta sección.")
-        return redirect(url_for("index"))
-    
     productos = db.listar_productos()
     return render_template("admin_productos.html", productos=productos)
 
-@app.route("/producto/<int:producto_id>/editar", methods=["GET", "POST"])
-@login_requerido
-def producto_editar(producto_id):
-    if not es_admin():
-        flash("Solo el administrador puede editar productos.")
-        return redirect(url_for("tienda"))
 
+@app.route("/admin/avisos", methods=["GET", "POST"])
+@admin_requerido
+def admin_avisos():
+    if request.method == "POST":
+        titulo = request.form.get("titulo", "").strip()
+        mensaje = request.form.get("mensaje", "").strip()
+
+        if not titulo or not mensaje:
+            flash("El titulo y el mensaje del aviso son obligatorios.")
+            return redirect(url_for("admin_avisos"))
+
+        if db.crear_aviso(titulo=titulo, mensaje=mensaje):
+            flash("Aviso publicado correctamente.")
+        else:
+            flash("No se pudo guardar el aviso.")
+
+        return redirect(url_for("admin_avisos"))
+
+    avisos = db.listar_avisos()
+    return render_template("admin_avisos.html", avisos=avisos)
+
+
+@app.route("/admin/avisos/<int:aviso_id>/eliminar", methods=["POST"])
+@admin_requerido
+def admin_aviso_eliminar(aviso_id):
+    if db.eliminar_aviso(aviso_id):
+        flash("Aviso eliminado.")
+    else:
+        flash("No se pudo eliminar el aviso.")
+
+    return redirect(url_for("admin_avisos"))
+
+
+@app.route("/admin/reporte-ventas")
+@admin_requerido
+def admin_reporte_ventas():
+    # Reporte diario solicitado en el examen.
+    reporte = db.reporte_ventas_hoy()
+    return render_template("reporte_ventas.html", reporte=reporte)
+
+@app.route("/producto/<int:producto_id>/editar", methods=["GET", "POST"])
+@admin_requerido
+def producto_editar(producto_id):
     p = db.obtener_producto(producto_id)
     if not p:
         flash("Producto no encontrado.")
@@ -315,21 +384,16 @@ def producto_editar(producto_id):
         precio = request.form.get("precio", type=float)
         stock = request.form.get("stock", type=int)
 
-        if not nombre:
-            flash("El nombre del producto es obligatorio.")
-            return redirect(url_for("producto_editar", producto_id=producto_id))
-
-        if imagen_url is None:
-            flash("La imagen debe ser un archivo local de la carpeta imagenes, no una URL externa.")
-            return redirect(url_for("producto_editar", producto_id=producto_id))
-
-        if precio is None or precio < 0:
-            flash("El precio debe ser un número mayor o igual a 0.")
-            return redirect(url_for("producto_editar", producto_id=producto_id))
-
-        if stock is None or stock < 0:
-            flash("El stock debe ser un entero mayor o igual a 0.")
-            return redirect(url_for("producto_editar", producto_id=producto_id))
+        error = validar_formulario_producto(
+            nombre=nombre,
+            imagen_url=imagen_url,
+            precio=precio,
+            stock=stock,
+            endpoint_error="producto_editar",
+            endpoint_args={"producto_id": producto_id},
+        )
+        if error:
+            return error
 
         if db.actualizar_producto(producto_id, nombre, descripcion, precio, stock, imagen_url):
             flash("Producto actualizado correctamente.")
@@ -341,12 +405,8 @@ def producto_editar(producto_id):
     return render_template("editar_producto.html", p=p)
 
 @app.route("/producto/<int:producto_id>/eliminar", methods=["POST"])
-@login_requerido
+@admin_requerido
 def producto_eliminar(producto_id):
-    if not es_admin():
-        flash("Solo el administrador puede eliminar productos.")
-        return redirect(url_for("tienda"))
-
     p = db.obtener_producto(producto_id)
     if not p:
         flash("Producto no encontrado.")
