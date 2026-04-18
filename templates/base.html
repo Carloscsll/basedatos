@@ -9,7 +9,10 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('index') }}">AquaLoca</a>
+    <a class="brand" href="{{ url_for('index') }}">
+      <img class="brand-logo" src="{{ url_for('descargar_imagen', filename='logo.png') }}" alt="Logo AquaLoca">
+      <span>AquaLoca</span>
+    </a>
     <nav class="navlinks">
       <a class="cartlink" href="{{ url_for('index') }}">Inicio</a>
       <a class="cartlink" href="{{ url_for('tienda') }}">Tienda</a>
@@ -19,6 +22,7 @@
           <a class="cartlink" href="{{ url_for('carrito') }}">Carrito</a>
         {% endif %}
         {% if es_admin %}
+          <a class="cartlink" href="{{ url_for('admin_productos') }}">Panel de administrador</a>
           <a class="cartlink" href="{{ url_for('admin_avisos') }}">Avisos</a>
           <a class="cartlink" href="{{ url_for('admin_reporte_ventas') }}">Costos y ganancias</a>
         {% endif %}

@@ -43,10 +43,10 @@
       </div>
 
       {% if es_admin %}
-      <form method="post" action="{{ url_for('producto_actualizar_imagen', producto_id=p['id']) }}">
+      <form method="post" action="{{ url_for('producto_actualizar_imagen', producto_id=p['id']) }}" enctype="multipart/form-data">
         <label>
-          Cambiar imagen (nombre de archivo en imagenes)
-          <input type="text" name="imagen_url" value="{{ p['imagen_url'] or '' }}" placeholder="mi-foto.jpg">
+          Cambiar imagen del producto
+          <input type="file" name="imagen_file" accept="image/*" required>
         </label>
         <button class="btn" type="submit">Guardar imagen</button>
       </form>

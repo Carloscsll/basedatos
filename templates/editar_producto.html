@@ -2,7 +2,7 @@
 {% block content %}
 <h1>Editar producto: {{ p['nombre'] }}</h1>
 
-<form method="post" class="card form-card">
+<form method="post" enctype="multipart/form-data" class="card form-card">
   <label>
     Nombre
     <input type="text" name="nombre" value="{{ p['nombre'] }}" required>
@@ -14,8 +14,8 @@
   </label>
 
   <label>
-    Nombre de imagen en carpeta imagenes
-    <input type="text" name="imagen_url" value="{{ p['imagen_url'] or '' }}" placeholder="foto-producto.jpg">
+    Reemplazar imagen (opcional)
+    <input type="file" name="imagen_file" accept="image/*">
   </label>
 
   <label>

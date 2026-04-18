@@ -277,6 +277,11 @@ class BaseDatosTienda:
     def semilla_productos(self):
         """Crea 3 productos de ejemplo base."""
         try:
+            self.cursor.execute("SELECT COUNT(*) AS total FROM productos;")
+            total_productos = int(self.cursor.fetchone()["total"] or 0)
+            if total_productos > 0:
+                return
+
             base = [
                 ("Playera", "Playera 100% algodón", 199.0, 120.0, 20, "foto portada.jpg"),
                 ("Taza", "Taza cerámica 350ml", 129.0, 70.0, 15, "foto portada.jpg"),

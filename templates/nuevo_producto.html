@@ -2,20 +2,20 @@
 {% block content %}
 <h1>Nuevo producto</h1>
 
-<form method="post" class="card form-card">
+<form method="post" enctype="multipart/form-data" class="card form-card">
   <label>
     Nombre
     <input type="text" name="nombre" required>
   </label>
 
   <label>
-    Descripcion
+    Descripción
     <textarea name="descripcion" rows="3"></textarea>
   </label>
 
   <label>
-    Nombre de imagen en carpeta imagenes (opcional)
-    <input type="text" name="imagen_url" placeholder="foto-producto.jpg">
+    Imagen del producto (opcional)
+    <input type="file" name="imagen_file" accept="image/*">
   </label>
 
   <label>

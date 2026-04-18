@@ -1,17 +1,29 @@
 # app.py
 from functools import wraps
 import os
+import uuid
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_from_directory
 from werkzeug.security import check_password_hash, generate_password_hash
+from werkzeug.utils import secure_filename
 from tienda_db import BaseDatosTienda
 
 app = Flask(__name__)
 app.secret_key = "TiEnda_SecRET_Clav_ña_1234567890"  # Cambia esto por una clave segura en producción
 
+UPLOADS_RELATIVE_DIR = "uploads"
+UPLOADS_ABS_DIR = os.path.join(os.path.dirname(__file__), "static", UPLOADS_RELATIVE_DIR)
+ALLOWED_IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}
+os.makedirs(UPLOADS_ABS_DIR, exist_ok=True)
+
 # Servir archivos desde la carpeta imagenes
 @app.route("/imagenes/<path:filename>")
 def descargar_imagen(filename):
-    return send_from_directory(os.path.join(os.path.dirname(__file__), "imagenes"), filename)
+    normalizado = (filename or "").replace("\\", "/").lstrip("/")
+    if normalizado.startswith(f"{UPLOADS_RELATIVE_DIR}/"):
+        subpath = normalizado[len(f"{UPLOADS_RELATIVE_DIR}/"):]
+        return send_from_directory(UPLOADS_ABS_DIR, subpath)
+
+    return send_from_directory(os.path.join(os.path.dirname(__file__), "imagenes"), os.path.basename(normalizado))
 
 db = BaseDatosTienda(ruta="./", bd="tienda.sqlite3")
 db.semilla_productos()
@@ -33,7 +45,35 @@ def normalizar_nombre_imagen(valor):
     if lower.startswith("/imagenes/"):
         valor = valor[len("/imagenes/"):]
 
+    if lower.startswith("/static/uploads/"):
+        valor = f"{UPLOADS_RELATIVE_DIR}/" + valor[len("/static/uploads/"):]
+        return valor.replace("\\", "/").strip()
+
+    if lower.startswith(f"{UPLOADS_RELATIVE_DIR}/"):
+        return valor.replace("\\", "/").strip()
+
     return os.path.basename(valor).strip()
+
+
+def extension_imagen_permitida(nombre_archivo):
+    if "." not in nombre_archivo:
+        return False
+    ext = nombre_archivo.rsplit(".", 1)[1].lower()
+    return ext in ALLOWED_IMAGE_EXTENSIONS
+
+
+def guardar_imagen_subida(file_storage):
+    if not file_storage or not file_storage.filename:
+        return ""
+
+    nombre_seguro = secure_filename(file_storage.filename)
+    if not nombre_seguro or not extension_imagen_permitida(nombre_seguro):
+        return None
+
+    nombre_final = f"{uuid.uuid4().hex}_{nombre_seguro}"
+    ruta_destino = os.path.join(UPLOADS_ABS_DIR, nombre_final)
+    file_storage.save(ruta_destino)
+    return f"{UPLOADS_RELATIVE_DIR}/{nombre_final}"
 
 
 def semilla_usuarios_demo():
@@ -139,7 +179,7 @@ def validar_formulario_producto(nombre, imagen_url, precio, stock, costo, endpoi
         return redirect(url_for(endpoint_error, **endpoint_args))
 
     if imagen_url is None:
-        flash("La imagen debe ser un archivo local de la carpeta imagenes, no una URL externa.")
+        flash("Sube una imagen valida desde el formulario (png, jpg, jpeg, gif o webp).")
         return redirect(url_for(endpoint_error, **endpoint_args))
 
     if precio is None or precio < 0:
@@ -261,7 +301,7 @@ def index():
 
 @app.route("/tienda")
 def tienda():
-    productos = db.listar_productos()[:3]
+    productos = db.listar_productos()
     return render_template("index.html", productos=productos)
 
 
@@ -286,8 +326,13 @@ def producto_nuevo():
     if request.method == "POST":
         nombre = request.form.get("nombre", "").strip()
         descripcion = request.form.get("descripcion", "").strip()
+        imagen_subida = guardar_imagen_subida(request.files.get("imagen_file"))
+        if request.files.get("imagen_file") and request.files.get("imagen_file").filename and imagen_subida is None:
+            flash("Formato de imagen no soportado. Usa png, jpg, jpeg, gif o webp.")
+            return redirect(url_for("producto_nuevo"))
+
         imagen_valor = request.form.get("imagen_url", "")
-        imagen_url = normalizar_nombre_imagen(imagen_valor)
+        imagen_url = imagen_subida or normalizar_nombre_imagen(imagen_valor)
         precio = request.form.get("precio", type=float)
         stock = request.form.get("stock", type=int)
         costo = request.form.get("costo", type=float)
@@ -322,9 +367,18 @@ def producto_actualizar_imagen(producto_id):
         flash("Producto no encontrado.")
         return redirect(url_for("tienda"))
 
-    imagen_url = normalizar_nombre_imagen(request.form.get("imagen_url", ""))
+    imagen_subida = guardar_imagen_subida(request.files.get("imagen_file"))
+    if request.files.get("imagen_file") and request.files.get("imagen_file").filename and imagen_subida is None:
+        flash("Formato de imagen no soportado. Usa png, jpg, jpeg, gif o webp.")
+        return redirect(request.referrer or url_for("tienda"))
+
+    imagen_url = imagen_subida or normalizar_nombre_imagen(request.form.get("imagen_url", ""))
+    if not imagen_url:
+        flash("Selecciona una imagen para actualizar el producto.")
+        return redirect(request.referrer or url_for("tienda"))
+
     if imagen_url is None:
-        flash("La imagen debe ser un archivo local de la carpeta imagenes, no una URL externa.")
+        flash("Sube una imagen valida desde el formulario.")
         return redirect(request.referrer or url_for("tienda"))
 
     if db.actualizar_imagen_producto(producto_id, imagen_url):
@@ -349,7 +403,7 @@ def admin_avisos():
         mensaje = request.form.get("mensaje", "").strip()
 
         if not titulo or not mensaje:
-            flash("El titulo y el mensaje del aviso son obligatorios.")
+            flash("El título y el mensaje del aviso son obligatorios.")
             return redirect(url_for("admin_avisos"))
 
         if db.crear_aviso(titulo=titulo, mensaje=mensaje):
@@ -408,7 +462,12 @@ def producto_editar(producto_id):
     if request.method == "POST":
         nombre = request.form.get("nombre", "").strip()
         descripcion = request.form.get("descripcion", "").strip()
-        imagen_url = normalizar_nombre_imagen(request.form.get("imagen_url", ""))
+        imagen_subida = guardar_imagen_subida(request.files.get("imagen_file"))
+        if request.files.get("imagen_file") and request.files.get("imagen_file").filename and imagen_subida is None:
+            flash("Formato de imagen no soportado. Usa png, jpg, jpeg, gif o webp.")
+            return redirect(url_for("producto_editar", producto_id=producto_id))
+
+        imagen_url = imagen_subida or (p["imagen_url"] or "")
         precio = request.form.get("precio", type=float)
         stock = request.form.get("stock", type=int)
         costo = request.form.get("costo", type=float)
