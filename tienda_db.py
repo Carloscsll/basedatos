@@ -1,10 +1,10 @@
-# tienda_db.py
 import os
 import sqlite3
 from sqlite3 import Error
 
 
 class BaseDatosTienda:
+    # Inicializa la base de datos y crea las tablas necesarias.
     def __init__(self, ruta="./", bd="tienda.sqlite3"):
         self.bd_path = os.path.join(ruta, bd)
         self.con = None
@@ -12,6 +12,7 @@ class BaseDatosTienda:
         self.conectar()
         self.crear_tablas()
 
+    # Establece la conexión SQLite y habilita claves foráneas.
     def conectar(self):
         try:
             self.con = sqlite3.connect(self.bd_path, check_same_thread=False)
@@ -22,6 +23,7 @@ class BaseDatosTienda:
         except Error as e:
             print(f"[DB] Error al conectar: {e}")
 
+    # Cierra la conexión a la base de datos si existe.
     def cerrar(self):
         try:
             if self.con:
@@ -29,6 +31,7 @@ class BaseDatosTienda:
         except Error as e:
             print(f"[DB] Error al cerrar: {e}")
 
+    # Crea las tablas y aplica migraciones simples si faltan columnas.
     def crear_tablas(self):
         try:
             self.cursor.execute("""
@@ -126,6 +129,7 @@ class BaseDatosTienda:
             print(f"[DB] No se pudo crear producto: {e}")
             return None
 
+    # Devuelve todos los productos ordenados por id descendente.
     def listar_productos(self):
         try:
             self.cursor.execute("SELECT * FROM productos ORDER BY id DESC;")
@@ -134,6 +138,7 @@ class BaseDatosTienda:
             print(f"[DB] Error listando productos: {e}")
             return []
 
+    # Obtiene un producto por su id.
     def obtener_producto(self, producto_id):
         try:
             self.cursor.execute("SELECT * FROM productos WHERE id=?;", (producto_id,))
@@ -142,6 +147,7 @@ class BaseDatosTienda:
             print(f"[DB] Error obteniendo producto: {e}")
             return None
 
+    # Actualiza la URL de imagen de un producto.
     def actualizar_imagen_producto(self, producto_id, imagen_url):
         try:
             self.cursor.execute(
@@ -154,6 +160,7 @@ class BaseDatosTienda:
             print(f"[DB] Error actualizando imagen de producto: {e}")
             return False
 
+    # Ajusta el stock de un producto.
     def actualizar_stock(self, producto_id, nuevo_stock):
         try:
             self.cursor.execute(
@@ -166,6 +173,7 @@ class BaseDatosTienda:
             print(f"[DB] Error actualizando stock: {e}")
             return False
 
+    # Actualiza los datos de un producto existente.
     def actualizar_producto(self, producto_id, nombre, descripcion, precio, stock, costo, imagen_url=None):
         try:
             self.cursor.execute("""
@@ -187,6 +195,7 @@ class BaseDatosTienda:
             print(f"[DB] Error actualizando producto: {e}")
             return False
 
+    # Elimina un producto por su id.
     def eliminar_producto(self, producto_id):
         try:
             self.cursor.execute("DELETE FROM productos WHERE id=?;", (int(producto_id),))
@@ -209,6 +218,7 @@ class BaseDatosTienda:
             print(f"[DB] No se pudo crear usuario: {e}")
             return None
 
+    # Recupera un usuario según su nombre de usuario.
     def obtener_usuario_por_username(self, username):
         try:
             self.cursor.execute("SELECT * FROM usuarios WHERE username=?;", (username.strip(),))
@@ -274,6 +284,7 @@ class BaseDatosTienda:
             print(f"[DB] Error creando pedido: {e}")
             return None
 
+    # Agrega productos de ejemplo si la tabla está vacía.
     def semilla_productos(self):
         """Crea 3 productos de ejemplo base."""
         try:
@@ -303,6 +314,7 @@ class BaseDatosTienda:
         except Error as e:
             print(f"[DB] Error semilla: {e}")
 
+    # Reemplaza URLs externas de imagen por una local.
     def reemplazar_imagenes_externas_por_local(self, imagen_local="foto portada.jpg"):
         """Convierte imagenes externas (http/https) a un archivo local en /imagenes."""
         try:
@@ -321,10 +333,12 @@ class BaseDatosTienda:
             print(f"[DB] Error reemplazando imagenes externas: {e}")
             return 0
 
+    # Función de compatibilidad que no hace nada aquí.
     def semilla_usuarios(self):
         """Compatibilidad: la semilla de usuarios se maneja desde app.py."""
         return None
 
+    # Elimina todos los usuarios que no sean admin.
     def limpiar_usuarios_no_admin(self):
         """Elimina todos los usuarios excepto los admins."""
         try:
@@ -351,6 +365,7 @@ class BaseDatosTienda:
             print(f"[DB] Error creando aviso: {e}")
             return None
 
+    # Devuelve la lista de avisos recientes.
     def listar_avisos(self, limit=50):
         try:
             self.cursor.execute(
@@ -367,6 +382,7 @@ class BaseDatosTienda:
             print(f"[DB] Error listando avisos: {e}")
             return []
 
+    # Elimina un aviso por su id.
     def eliminar_aviso(self, aviso_id):
         try:
             self.cursor.execute("DELETE FROM avisos WHERE id=?;", (int(aviso_id),))
@@ -385,6 +401,7 @@ class BaseDatosTienda:
             print(f"[DB] Error obteniendo pedido: {e}")
             return None
 
+    # Lista los items asociados a un pedido.
     def listar_items_pedido(self, pedido_id):
         try:
             self.cursor.execute(
@@ -402,6 +419,7 @@ class BaseDatosTienda:
             print(f"[DB] Error listando items del pedido: {e}")
             return []
 
+    # Cambia el estado de un pedido.
     def actualizar_estado_pedido(self, pedido_id, estado):
         try:
             self.cursor.execute("UPDATE pedidos SET estado=? WHERE id=?;", (estado, int(pedido_id)))
@@ -411,6 +429,7 @@ class BaseDatosTienda:
             print(f"[DB] Error actualizando estado de pedido: {e}")
             return False
 
+    # Genera resumen financiero y pedidos de hoy.
     def reporte_finanzas_hoy(self):
         """Devuelve resumen de ingresos, costos, ganancias y pedidos de hoy (hora local)."""
         try:

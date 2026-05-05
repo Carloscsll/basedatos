@@ -1,4 +1,3 @@
-# app.py
 from functools import wraps
 import os
 import uuid
@@ -17,6 +16,7 @@ os.makedirs(UPLOADS_ABS_DIR, exist_ok=True)
 
 # Servir archivos desde la carpeta imagenes
 @app.route("/imagenes/<path:filename>")
+# Sirve archivos de imagen según la ruta solicitada.
 def descargar_imagen(filename):
     normalizado = (filename or "").replace("\\", "/").lstrip("/")
     if normalizado.startswith(f"{UPLOADS_RELATIVE_DIR}/"):
@@ -33,6 +33,7 @@ db.reemplazar_imagenes_externas_por_local("foto portada.jpg")
 ESTADOS_PEDIDO = ["realizado", "enviado", "entregado"]
 
 
+# Normaliza nombres o URLs de imagen a rutas locales.
 def normalizar_nombre_imagen(valor):
     valor = (valor or "").strip()
     if not valor:
@@ -55,6 +56,7 @@ def normalizar_nombre_imagen(valor):
     return os.path.basename(valor).strip()
 
 
+# Verifica si la imagen tiene una extensión permitida.
 def extension_imagen_permitida(nombre_archivo):
     if "." not in nombre_archivo:
         return False
@@ -62,6 +64,7 @@ def extension_imagen_permitida(nombre_archivo):
     return ext in ALLOWED_IMAGE_EXTENSIONS
 
 
+# Guarda la imagen subida y devuelve su ruta local.
 def guardar_imagen_subida(file_storage):
     if not file_storage or not file_storage.filename:
         return ""
@@ -76,6 +79,7 @@ def guardar_imagen_subida(file_storage):
     return f"{UPLOADS_RELATIVE_DIR}/{nombre_final}"
 
 
+# Crea o actualiza usuarios demo al iniciar la app.
 def semilla_usuarios_demo():
     # Credenciales demo iniciales:
     # EmilianoAdmin / Holakhace
@@ -119,6 +123,7 @@ def semilla_usuarios_demo():
 
 semilla_usuarios_demo()
 
+# Inicializa el carrito en la sesión si no existe.
 def carrito_session():
     # carrito: { "producto_id": cantidad }
     if "carrito" not in session:
@@ -126,19 +131,23 @@ def carrito_session():
     return session["carrito"]
 
 
+# Devuelve el usuario actual de la sesión.
 def usuario_actual():
     return session.get("usuario")
 
 
+# Comprueba si hay un usuario autenticado.
 def usuario_autenticado():
     return usuario_actual() is not None
 
 
+# Comprueba si el usuario actual es administrador.
 def es_admin():
     u = usuario_actual() or {}
     return u.get("rol") == "admin"
 
 
+# Decorador que exige iniciar sesión.
 def login_requerido(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -150,6 +159,7 @@ def login_requerido(fn):
     return wrapper
 
 
+# Decorador que exige ser administrador.
 def admin_requerido(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
@@ -166,10 +176,12 @@ def admin_requerido(fn):
     return wrapper
 
 
+# Verifica si el estado del pedido es válido.
 def estado_pedido_valido(estado):
     return estado in ESTADOS_PEDIDO
 
 
+# Valida los campos del formulario de producto.
 def validar_formulario_producto(nombre, imagen_url, precio, stock, costo, endpoint_error, endpoint_args=None):
     # Centraliza validaciones para reutilizarlas en crear/editar producto.
     endpoint_args = endpoint_args or {}
@@ -198,6 +210,7 @@ def validar_formulario_producto(nombre, imagen_url, precio, stock, costo, endpoi
 
 
 @app.context_processor
+# Inyecta variables de usuario en plantillas.
 def inyectar_usuario_template():
     return {
         "usuario": usuario_actual(),
@@ -206,6 +219,7 @@ def inyectar_usuario_template():
 
 
 @app.route("/login", methods=["GET", "POST"])
+# Muestra el login o procesa el intento de acceso.
 def login():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -231,6 +245,7 @@ def login():
 
 
 @app.route("/registro", methods=["GET", "POST"])
+# Muestra el registro o crea un nuevo usuario.
 def registro():
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -285,6 +300,7 @@ def registro():
 
 
 @app.route("/logout")
+# Cierra la sesión del usuario.
 def logout():
     session.pop("usuario", None)
     session.pop("carrito", None)
@@ -292,6 +308,7 @@ def logout():
     return redirect(url_for("index"))
 
 @app.route("/")
+# Muestra la portada con productos y avisos.
 def index():
     destacados = db.listar_productos()[:3]
     # Avisos visibles para cualquier visitante en la portada.
@@ -300,6 +317,7 @@ def index():
 
 
 @app.route("/tienda")
+# Muestra el catálogo completo de productos.
 def tienda():
     productos = db.listar_productos()
     return render_template("index.html", productos=productos)
@@ -307,6 +325,7 @@ def tienda():
 
 @app.route("/perfil")
 @login_requerido
+# Muestra el perfil del usuario autenticado.
 def perfil():
     # Vista simple para cumplir el requisito de perfil de usuario general.
     cart = carrito_session()
@@ -314,6 +333,7 @@ def perfil():
     return render_template("perfil.html", total_items_carrito=total_items_carrito)
 
 @app.route("/producto/<int:producto_id>")
+# Muestra la página de un producto específico.
 def producto(producto_id):
     p = db.obtener_producto(producto_id)
     if not p:
@@ -322,6 +342,7 @@ def producto(producto_id):
 
 @app.route("/productos/nuevo", methods=["GET", "POST"])
 @admin_requerido
+# Permite crear un nuevo producto en admin.
 def producto_nuevo():
     if request.method == "POST":
         nombre = request.form.get("nombre", "").strip()
@@ -361,6 +382,7 @@ def producto_nuevo():
 
 @app.route("/producto/<int:producto_id>/imagen", methods=["POST"])
 @admin_requerido
+# Actualiza la imagen de un producto.
 def producto_actualizar_imagen(producto_id):
     p = db.obtener_producto(producto_id)
     if not p:
@@ -390,6 +412,7 @@ def producto_actualizar_imagen(producto_id):
 
 @app.route("/admin/productos")
 @admin_requerido
+# Muestra el listado de productos para admin.
 def admin_productos():
     productos = db.listar_productos()
     return render_template("admin_productos.html", productos=productos)
@@ -397,6 +420,7 @@ def admin_productos():
 
 @app.route("/admin/avisos", methods=["GET", "POST"])
 @admin_requerido
+# Administra los avisos desde el panel.
 def admin_avisos():
     if request.method == "POST":
         titulo = request.form.get("titulo", "").strip()
@@ -419,6 +443,7 @@ def admin_avisos():
 
 @app.route("/admin/avisos/<int:aviso_id>/eliminar", methods=["POST"])
 @admin_requerido
+# Elimina un aviso existente.
 def admin_aviso_eliminar(aviso_id):
     if db.eliminar_aviso(aviso_id):
         flash("Aviso eliminado.")
@@ -430,6 +455,7 @@ def admin_aviso_eliminar(aviso_id):
 
 @app.route("/admin/reporte-ventas")
 @admin_requerido
+# Muestra el reporte de ventas diario.
 def admin_reporte_ventas():
     reporte = db.reporte_finanzas_hoy()
     return render_template("reporte_ventas.html", reporte=reporte, estados_pedido=ESTADOS_PEDIDO)
@@ -437,6 +463,7 @@ def admin_reporte_ventas():
 
 @app.route("/admin/pedidos/<int:pedido_id>/estado", methods=["POST"])
 @admin_requerido
+# Cambia el estado de un pedido.
 def admin_pedido_actualizar_estado(pedido_id):
     estado = request.form.get("estado", "").strip()
 
@@ -453,6 +480,7 @@ def admin_pedido_actualizar_estado(pedido_id):
 
 @app.route("/producto/<int:producto_id>/editar", methods=["GET", "POST"])
 @admin_requerido
+# Permite editar los datos de un producto.
 def producto_editar(producto_id):
     p = db.obtener_producto(producto_id)
     if not p:
@@ -495,6 +523,7 @@ def producto_editar(producto_id):
 
 @app.route("/producto/<int:producto_id>/eliminar", methods=["POST"])
 @admin_requerido
+# Elimina un producto del catálogo.
 def producto_eliminar(producto_id):
     p = db.obtener_producto(producto_id)
     if not p:
@@ -509,6 +538,7 @@ def producto_eliminar(producto_id):
     return redirect(url_for("admin_productos"))
 
 @app.route("/carrito/agregar", methods=["POST"])
+# Añade un producto al carrito.
 def carrito_agregar():
     pid = request.form.get("producto_id", type=int)
     qty = request.form.get("cantidad", type=int, default=1)
@@ -533,6 +563,7 @@ def carrito_agregar():
     return redirect(request.referrer or url_for("tienda"))
 
 @app.route("/carrito")
+# Muestra el contenido del carrito.
 def carrito():
     cart = carrito_session()
     items = []
@@ -549,6 +580,7 @@ def carrito():
     return render_template("carrito.html", items=items, total=total)
 
 @app.route("/carrito/quitar", methods=["POST"])
+# Quita un producto del carrito.
 def carrito_quitar():
     pid = request.form.get("producto_id", type=int)
     cart = carrito_session()
@@ -557,6 +589,7 @@ def carrito_quitar():
     return redirect(url_for("carrito"))
 
 @app.route("/checkout", methods=["POST"])
+# Procesa el pago y crea el pedido.
 def checkout():
     nombre = request.form.get("nombre", "").strip()
     email = request.form.get("email", "").strip() or None

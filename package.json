@@ -1,0 +1,17 @@
+{
+  "name": "mi-tienda",
+  "version": "1.0.0",
+  "description": "Proyecto de tienda con Flask, Gulp y SCSS",
+  "main": "gulpfile.js",
+  "scripts": {
+    "build": "gulp build",
+    "watch": "gulp watch"
+  },
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-sass": "^5.1.0",
+    "gulp-autoprefixer": "^8.0.0",
+    "gulp-clean-css": "^4.3.0",
+    "sass": "^1.63.6"
+  }
+}
